@@ -172,7 +172,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        error_at(p, "トークナイズできません");
+        error_at(p, "Cant tokenize");
     }
 
     new_token(TK_EOF, cur, p);
@@ -281,6 +281,10 @@ void gen(Node *node) {
         case ND_DIV:
             printf("    cqo\n");
             printf("    idiv rdi\n");
+            break;
+        default:
+            error("Can't generate code. This node must be some operator.");
+            break;
     }
 
     printf("    push rax\n");
