@@ -20,11 +20,12 @@ bool consume(char *op) {
 }
 
 Token *consume_ident() {
-    if(token->kind == TK_IDENT) {
+    if(token != NULL && token->kind == TK_IDENT) {
         Token *tok = calloc(1, sizeof(Token));
         tok->kind = TK_IDENT;
         tok->str = token->str;
-        tok->len = 1;
+        tok->len = token->len;
+        token = token->next;
         return tok;
     } else {
         return NULL;
@@ -36,10 +37,11 @@ Token *consume_ident() {
  * else report error
  */
 void expect(char *op) {
+    // printf("%s\n", op);
     if(token->kind != TK_RESERVED ||
         strlen(op) != token->len ||
         memcmp(token->str, op, token->len)) {
-        error_at(token->str, "It's not '%c'", op);
+        error_at(token->str, "It's not '%s'", op);
     }
     token = token->next;
 }
@@ -53,12 +55,22 @@ int expect_number() {
     return val;
 }
 
+LVar *find_lvar(Token *tok) {
+    for(LVar *var = locals; var; var = var->next) {
+        if(var->len == tok->len && !memcmp(tok->str, var->name, var->len)) {
+            return var;
+        }
+    }
+    return NULL;
+}
+
 bool at_eof() {
     return token->kind == TK_EOF;
 }
 
 // create new token and connect to cur
 Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
+    // printf("%s\n", str);
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     if(len != -1) {
@@ -74,7 +86,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
 }
 
 void print_tokens(Token *token) {
-    if(!(token == NULL)) {
+    if(token != NULL) {
         switch(token->kind) {
             case TK_EOF:
                 printf("TK_EOF\n");
@@ -83,8 +95,14 @@ void print_tokens(Token *token) {
             case TK_NUM:
                 printf("TK_NUM: %d\n", token->val);
                 break;
-            default:
+            case TK_IDENT:
+                printf("TK_IDENT: %s\n", token->str);
+                break;
+            case TK_RESERVED:
                 printf("TK_RESERVED: %s\n", token->str);
+                break;
+            default:
+                error("Can't find token in print_tokens");
                 break;
         }
     }
@@ -98,24 +116,37 @@ Token *tokenize(char *p) {
     Token *cur = &head;
 
     while(*p) {
-        // skip space
-        if(isspace(*p)) {
-            p++;
-        } else if(!strncmp(p, ">=", 2) || !strncmp(p, "<=", 2) ||
-            !strncmp(p, "==", 2) || !strncmp(p, "!=", 2)) {
-            cur = new_token(TK_RESERVED, cur, p, 2);
-            p += 2;
-        } else if(*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
-           *p == '(' || *p == ')' || *p == '>' || *p == '<' ||
-           *p == '=' || *p == ',' || *p == ';') {
+        while(*p != ';') {
+            // skip space
+            if(isspace(*p)) {
+                p++;
+            } else if(!strncmp(p, ">=", 2) || !strncmp(p, "<=", 2) ||
+                        !strncmp(p, "==", 2) || !strncmp(p, "!=", 2)) {
+                cur = new_token(TK_RESERVED, cur, p, 2);
+                p += 2;
+            } else if(*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
+                        *p == '(' || *p == ')' || *p == '>' || *p == '<' ||
+                        *p == '=' || *p == ',') {
+                cur = new_token(TK_RESERVED, cur, p++, 1);
+            } else if('a' <= *p && *p <= 'z') {
+                char *head = p;
+                while(('a' <= *p && *p <= 'z') || ('0' <= *p && *p <= '9')) {
+                    p++;
+                }
+                int len = p - head;
+                cur = new_token(TK_IDENT, cur, head, len);
+                p = head + len;
+            } else if(isdigit(*p)) {
+                cur = new_token(TK_NUM, cur, p, -1);
+                cur->val = strtol(p, &p, 10);
+            } else {
+                error_at(p, "Cant tokenize");
+            }
+        }
+        if(*p == ';') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
-        } else if('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p++, 1);
-        } else if(isdigit(*p)) {
-            cur = new_token(TK_NUM, cur, p, -1);
-            cur->val = strtol(p, &p, 10);
         } else {
-            error_at(p, "Cant tokenize");
+            error_at(p, "End of sentence must be a semicolon");
         }
     }
 
@@ -149,53 +180,65 @@ Node *new_node_num(int val) {
     return node;
 }
 
-void pprint_node(char *str, int val, int depth) {
-    for(int i=0;i<depth;++i) {
-        printf("\t");
+char *enum2str(NodeKind kind) {
+    switch(kind) {
+        case ND_ADD:
+            return "+";
+        case ND_SUB:
+            return "-";
+        case ND_MUL:
+            return "*";
+        case ND_DIV:
+            return "/";
+        case ND_BEQ:
+            return "==";
+        case ND_NEQ:
+            return "!=";
+        case ND_LT:
+            return "<";
+        case ND_LE:
+            return "<=";
+        case ND_ASSIGN:
+            return "=";
+        default:
+            return "";
     }
-    printf("%s", str);
+}
+
+void pprint_node(NodeKind kind, int val, int depth) {
+    for(int i=0;i<depth;++i) {
+        printf("  ");
+    }
+    printf("%s", enum2str(kind));
     if(val == -1) {
         printf("\n");
+    } else if(kind == ND_LVAR) {
+        printf("%c\n", 'a' + (val / 8) - 1);
     } else {
-        printf(": %d\n", val);
+        printf("%d\n", val);
     }
 }
 
 void print_nodes(Node *node, int depth) {
     if(node == NULL) return;
     switch(node->kind) {
-        case ND_ADD:
-            print_nodes(node->lhs, depth + 1);
-            pprint_node("ND_ADD", -1, depth);
-            print_nodes(node->rhs, depth + 1);
+        case ND_NUM:
+            pprint_node(ND_NUM, node->val, depth);
             break;
-        case ND_SUB:
-            print_nodes(node->lhs, depth + 1);
-            pprint_node("ND_SUB", -1, depth);
-            print_nodes(node->rhs, depth + 1);
-            break;
-        case ND_MUL:
-            print_nodes(node->lhs, depth + 1);
-            pprint_node("ND_MUL", -1, depth);
-            print_nodes(node->rhs, depth + 1);
-            break;
-        case ND_DIV:
-            print_nodes(node->lhs, depth + 1);
-            pprint_node("ND_DIV", -1, depth);
-            print_nodes(node->rhs, depth + 1);
+        case ND_LVAR:
+            pprint_node(ND_LVAR, node->offset, depth);
             break;
         default:
-            pprint_node("ND_NUM", node->val, depth);
-            break;
+            print_nodes(node->lhs, depth + 1);
+            pprint_node(node->kind, -1, depth);
+            print_nodes(node->rhs, depth + 1);
     }
 }
-
-Node *code[100];
 
 void program() {
     int i = 0;
     while(!at_eof()) {
-        code[++i] = stmt();
+        code[i++] = stmt();
     }
     code[i] = NULL;
 }
@@ -290,10 +333,22 @@ Node *term() {
     // if next_token == '(' then term must be '(' expr ')'
     // printf("term: %s\n", token->str);
     Token *tok = consume_ident();
+
     if(tok) {
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
-        node->offset = (tok->str[0] - 'a' + 1) * 8;
+        LVar *lvar = find_lvar(tok);
+        if(lvar) {
+            node->offset = lvar->offset;
+        } else {
+            lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->offset = locals->offset + 8;
+            node->offset = lvar->offset;
+            locals = lvar;
+        }
         return node;
     } else if(consume("(")) {
         Node *node = expr();

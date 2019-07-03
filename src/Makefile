@@ -11,6 +11,6 @@ test: mdcc
 	./test.sh
 
 clean:
-	rm -f mdcc *.o *~ tmp tmp.s
+	rm -f mdcc *.o *~ tmp tmp.s a.out
 
 .PHONY: test clean

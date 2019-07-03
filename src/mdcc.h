@@ -25,6 +25,18 @@ struct Token {
     int len; // token length
 };
 
+typedef struct LVar LVar;
+// type of local variable
+struct LVar {
+    LVar *next; // next variable or NULL
+    char *name; // name of variable
+    int len; // length of name
+    int offset; // offset from RBP
+};
+
+// local variables
+extern LVar *locals;
+
 // kind of AST node
 typedef enum {
     ND_ADD, // +
@@ -55,15 +67,14 @@ struct Node {
 
 // Error function
 void error(char *fmt, ...);
-extern char *user_input;
 void error_at(char *loc, char *fmt, ...);
 
 // Lexer
-extern Token *token;
 bool consume(char *op);
 Token *consume_ident();
 void expect(char *op);
 int expect_number();
+LVar *find_lvar(Token *tok);
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 void print_tokens(Token *token);
@@ -72,9 +83,9 @@ Token *tokenize(char *p);
 // Parser
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
-void pprint_node(char *str, int val, int depth);
+char *enum2str(NodeKind kind);
+void pprint_node(NodeKind kind, int val, int depth);
 void print_nodes(Node *node, int depth);
-extern Node *code[100];
 void program();
 Node *stmt();
 Node *expr();
@@ -87,4 +98,9 @@ Node *unary();
 Node *term();
 
 // Code generation
+void gen_lval(Node *node);
 void gen(Node *node);
+
+extern char *user_input;
+extern Token *token;
+extern Node *code[100];
