@@ -120,14 +120,14 @@ bool consume(char op) {
  */
 void expect(char op) {
     if(token->kind != TK_RESERVED || token->str[0] != op) {
-        error_at(token->str, "'%c'ではありません", op);
+        error_at(token->str, "It's not '%c'", op);
     }
     token = token->next;
 }
 
 int expect_number() {
     if(token->kind != TK_NUM) {
-        error_at(token->str, "数ではありません");
+        error_at(token->str, "It's not number");
     }
     int val = token->val;
     token = token->next;
@@ -295,7 +295,7 @@ void gen(Node *node) {
 
 int main(int argc, char **argv) {
     if(argc != 2) {
-        error("引数の個数が正しくありません");
+        error("The number of arguments are not valid.");
         return 1;
     }
 
