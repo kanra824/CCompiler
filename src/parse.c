@@ -19,6 +19,18 @@ bool consume(char *op) {
     return true;
 }
 
+Token *consume_ident() {
+    if(token->kind == TK_IDENT) {
+        Token *tok = calloc(1, sizeof(Token));
+        tok->kind = TK_IDENT;
+        tok->str = token->str;
+        tok->len = 1;
+        return tok;
+    } else {
+        return NULL;
+    }
+}
+
 /* if next token is expected symbol
  * then read next token
  * else report error
@@ -94,9 +106,11 @@ Token *tokenize(char *p) {
             cur = new_token(TK_RESERVED, cur, p, 2);
             p += 2;
         } else if(*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
-           *p == '(' || *p == ')' || *p == '>' || *p == '<') {
-            cur = new_token(TK_RESERVED, cur, p, 1);
-            p++;
+           *p == '(' || *p == ')' || *p == '>' || *p == '<' ||
+           *p == '=' || *p == ',' || *p == ';') {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+        } else if('a' <= *p && *p <= 'z') {
+            cur = new_token(TK_IDENT, cur, p++, 1);
         } else if(isdigit(*p)) {
             cur = new_token(TK_NUM, cur, p, -1);
             cur->val = strtol(p, &p, 10);
@@ -135,52 +149,73 @@ Node *new_node_num(int val) {
     return node;
 }
 
+void pprint_node(char *str, int val, int depth) {
+    for(int i=0;i<depth;++i) {
+        printf("\t");
+    }
+    printf("%s", str);
+    if(val == -1) {
+        printf("\n");
+    } else {
+        printf(": %d\n", val);
+    }
+}
+
 void print_nodes(Node *node, int depth) {
     if(node == NULL) return;
     switch(node->kind) {
         case ND_ADD:
             print_nodes(node->lhs, depth + 1);
-            for(int i=0;i<depth;++i) {
-                printf("\t");
-            }
-            printf("ND_ADD\n");
+            pprint_node("ND_ADD", -1, depth);
             print_nodes(node->rhs, depth + 1);
             break;
         case ND_SUB:
             print_nodes(node->lhs, depth + 1);
-            for(int i=0;i<depth;++i) {
-                printf("\t");
-            }
-            printf("ND_SUB\n");
+            pprint_node("ND_SUB", -1, depth);
             print_nodes(node->rhs, depth + 1);
             break;
         case ND_MUL:
             print_nodes(node->lhs, depth + 1);
-            for(int i=0;i<depth;++i) {
-                printf("\t");
-            }
-            printf("ND_MUL\n");
+            pprint_node("ND_MUL", -1, depth);
             print_nodes(node->rhs, depth + 1);
             break;
         case ND_DIV:
             print_nodes(node->lhs, depth + 1);
-            for(int i=0;i<depth;++i) {
-                printf("\t");
-            }
-            printf("ND_DIV\n");
+            pprint_node("ND_DIV", -1, depth);
             print_nodes(node->rhs, depth + 1);
             break;
         default:
-            for(int i=0;i<depth;++i) {
-                printf("\t");
-            }
-            printf("ND_NUM: %d\n", node->val);
+            pprint_node("ND_NUM", node->val, depth);
             break;
     }
 }
 
+Node *code[100];
+
+void program() {
+    int i = 0;
+    while(!at_eof()) {
+        code[++i] = stmt();
+    }
+    code[i] = NULL;
+}
+
+Node *stmt() {
+    Node *node = expr();
+    expect(";");
+    return node;
+}
+
 Node *expr() {
-    return equality();
+    return assign();
+}
+
+Node *assign() {
+    Node *node = equality();
+    if(consume("=")) {
+        node = new_node(ND_ASSIGN, node, assign());
+    }
+    return node;
 }
 
 Node *equality() {
@@ -254,11 +289,18 @@ Node *unary() {
 Node *term() {
     // if next_token == '(' then term must be '(' expr ')'
     // printf("term: %s\n", token->str);
-    if(consume("(")) {
+    Token *tok = consume_ident();
+    if(tok) {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+        node->offset = (tok->str[0] - 'a' + 1) * 8;
+        return node;
+    } else if(consume("(")) {
         Node *node = expr();
         expect(")");
         return node;
+    } else {
+        // term muse be a number
+        return new_node_num(expect_number());
     }
-    // else term muse be a number
-    return new_node_num(expect_number());
 }
