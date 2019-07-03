@@ -6,4 +6,4 @@ test: mdcc
 		./test.sh
 
 clean:
-		rm -f mdcc *.o *~ tmp*
+		rm -f mdcc *.o *~ tmp* a.out
