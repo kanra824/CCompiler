@@ -60,6 +60,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 Node *expr();
 Node *mul();
+Node *unary();
 Node *term();
 
 // Code generation
@@ -165,8 +166,6 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        
-
         if(isdigit(*p)) {
             cur = new_token(TK_NUM, cur, p);
             cur->val = strtol(p, &p, 10);
@@ -220,15 +219,25 @@ Node *expr() {
 }
 
 Node *mul() {
-    Node *node = term();
+    Node *node = unary();
     for(;;) {
         if(consume('*')) {
-            node = new_node(ND_MUL, node, term());
+            node = new_node(ND_MUL, node, unary());
         } else if(consume('/')) {
-            node = new_node(ND_DIV, node, term());
+            node = new_node(ND_DIV, node, unary());
         } else {
             return node;
         }
+    }
+}
+
+Node *unary() {
+    if(consume('+')) {
+        return term();
+    } else if(consume('-')) {
+        return new_node(ND_SUB, new_node_num(0), term());
+    } else {
+        return term();
     }
 }
 
