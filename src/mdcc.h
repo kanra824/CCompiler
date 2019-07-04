@@ -5,12 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #define DEBUG
+#define DEBUG
 
 // kind of token
 typedef enum {
     TK_RESERVED, // symbol
     TK_IDENT, // identifier
+    TK_RETURN, // return
     TK_NUM, // integer token
     TK_EOF, // end of file
 } TokenKind;
@@ -49,6 +50,7 @@ typedef enum {
     ND_LE, // <=
     ND_ASSIGN, // =
     ND_LVAR, // local variable
+    ND_RETURN, // return
     ND_NUM, // 整数
 } NodeKind;
 
@@ -75,6 +77,7 @@ Token *consume_ident();
 void expect(char *op);
 int expect_number();
 LVar *find_lvar(Token *tok);
+int is_alnum(char c);
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 void print_tokens(Token *token);

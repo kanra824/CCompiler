@@ -10,7 +10,7 @@ bool consume(char *op) {
     printf("op: %s\n", op);
     printf("token->len: %d\n", token->len);
     printf("strlen(op): %ld\n", strlen(op)); */
-    if(token->kind != TK_RESERVED ||
+    if((token->kind != TK_RESERVED && (token->kind != TK_RETURN)) ||
         strlen(op) != token->len ||
         memcmp(token->str, op, token->len)) {
             return false;
@@ -41,6 +41,7 @@ void expect(char *op) {
     if(token->kind != TK_RESERVED ||
         strlen(op) != token->len ||
         memcmp(token->str, op, token->len)) {
+            printf("debug");
         error_at(token->str, "It's not '%s'", op);
     }
     token = token->next;
@@ -62,6 +63,13 @@ LVar *find_lvar(Token *tok) {
         }
     }
     return NULL;
+}
+
+int is_alnum(char c) {
+    return ('a' <= c && c <= 'z') ||
+            ('A' <= c && c <= 'Z') ||
+            ('0' <= c && c <= '9') ||
+            (c == '_');
 }
 
 bool at_eof() {
@@ -98,6 +106,9 @@ void print_tokens(Token *token) {
             case TK_IDENT:
                 printf("TK_IDENT: %s\n", token->str);
                 break;
+            case TK_RETURN:
+                printf("TK_RETURN: %s\n", token->str);
+                break;
             case TK_RESERVED:
                 printf("TK_RESERVED: %s\n", token->str);
                 break;
@@ -115,11 +126,17 @@ Token *tokenize(char *p) {
     head.next = NULL;
     Token *cur = &head;
 
+    char * ph = p;
     while(*p) {
-        while(*p != ';') {
+        // printf("%ld\n", ph - p);
+        // printf("%ld\n", cur - &head);
+        while(*p && *p != ';') {
             // skip space
             if(isspace(*p)) {
                 p++;
+            } else if(!strncmp(p, "return", 6) && !is_alnum(p[6])) {
+                cur = new_token(TK_RETURN, cur, p, 6);
+                p += 6;
             } else if(!strncmp(p, ">=", 2) || !strncmp(p, "<=", 2) ||
                         !strncmp(p, "==", 2) || !strncmp(p, "!=", 2)) {
                 cur = new_token(TK_RESERVED, cur, p, 2);
@@ -200,6 +217,8 @@ char *enum2str(NodeKind kind) {
             return "<=";
         case ND_ASSIGN:
             return "=";
+        case ND_RETURN:
+            return "ret";
         default:
             return "";
     }
@@ -240,11 +259,18 @@ void program() {
     while(!at_eof()) {
         code[i++] = stmt();
     }
+    
     code[i] = NULL;
 }
 
 Node *stmt() {
-    Node *node = expr();
+    Node *node;
+    if(consume("return")) {
+        node = new_node(ND_RETURN, expr(), NULL);
+    } else {
+        node = expr();
+    }
+
     expect(";");
     return node;
 }
