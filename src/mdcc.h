@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #define DEBUG
+#define DEBUG
 
 // kind of token
 typedef enum {
@@ -33,9 +33,6 @@ struct LVar {
     int len; // length of name
     int offset; // offset from RBP
 };
-
-// local variables
-extern LVar *locals;
 
 // kind of AST node
 typedef enum {
@@ -66,6 +63,11 @@ struct Node {
     int val; // use if kind == ND_NUM
     int offset; // use if kind == ND_LVAR
 };
+
+Token *token; // token sequence
+char *user_input; // program input
+LVar *locals; // local_variables;
+Node *code[100]; // node sequence
 
 //---------------------------------------------------------------
 // Function prototype
@@ -107,7 +109,3 @@ Node *term();
 // Code generation
 void gen_lval(Node *node);
 void gen(Node *node);
-
-extern char *user_input;
-extern Token *token;
-extern Node *code[100];

@@ -81,13 +81,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
     // printf("%s\n", str);
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
-    if(len != -1) {
-        tok->str = (char*)malloc(sizeof(char) * len);
-        if(tok->str == NULL) {
-            error("tokstr can't reserved");
-        }
-        strncpy(tok->str, str, len);
-    }
+    tok->str = str;
     tok->len = len;
     cur->next = tok;
     return tok;
@@ -107,7 +101,7 @@ void print_tokens(Token *token) {
                 printf("TK_IDENT: %s\n", token->str);
                 break;
             case TK_RESERVED:
-                printf("TK_RESERVED: %s\n", token->str);
+                printf("TK_RESERVED: %.*s\n", token->len,  token->str);
                 break;
             default:
                 error("Can't find token in print_tokens");
@@ -123,7 +117,6 @@ Token *tokenize(char *p) {
     head.next = NULL;
     Token *cur = &head;
 
-    char *ph = p;
     while(*p) {
         // printf("%ld\n", ph - p);
         // printf("%ld\n", cur - &head);

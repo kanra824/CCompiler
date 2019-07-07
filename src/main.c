@@ -1,11 +1,5 @@
 #include "mdcc.h"
 
-Token *token;
-char *user_input;
-LVar *locals;
-Node *code[100];
-
-
 int main(int argc, char **argv) {
     if(argc != 2) {
         error("The number of arguments are not valid.");
@@ -16,7 +10,7 @@ int main(int argc, char **argv) {
     locals = calloc(1, sizeof(LVar));
     locals->offset = 0;
     
-    token = tokenize(argv[1]);
+    token = tokenize(user_input);
     #ifdef DEBUG
         printf("print tokens\n");
         print_tokens(token);
