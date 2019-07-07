@@ -37,7 +37,6 @@ Token *consume_ident() {
  * else report error
  */
 void expect(char *op) {
-    // TODO: error_atがおかしい！！！！！
     // printf("%s\n", op);
     if(token->kind != TK_RESERVED ||
         strlen(op) != token->len ||
@@ -98,7 +97,7 @@ void print_tokens(Token *token) {
                 printf("TK_NUM: %d\n", token->val);
                 break;
             case TK_IDENT:
-                printf("TK_IDENT: %s\n", token->str);
+                printf("TK_IDENT: %.*s\n", token->len, token->str);
                 break;
             case TK_RESERVED:
                 printf("TK_RESERVED: %.*s\n", token->len,  token->str);
@@ -120,52 +119,47 @@ Token *tokenize(char *p) {
     while(*p) {
         // printf("%ld\n", ph - p);
         // printf("%ld\n", cur - &head);
-        while(*p && *p != ';') {
-            // skip space
-            if(isspace(*p)) {
-                p++;
-            } else if(!strncmp(p, "return", 6) && !is_alnum(p[6])) {
-                cur = new_token(TK_RESERVED, cur, p, 6);
-                p += 6;
-            } else if(!strncmp(p, "while", 5) && !is_alnum(p[5])) {
-                cur = new_token(TK_RESERVED, cur, p, 5);
-                p += 5;
-            } else if(!strncmp(p, "else", 4) && !is_alnum(p[4])) {
-                cur = new_token(TK_RESERVED, cur, p, 4);
-                p += 4;
-            } else if(!strncmp(p, "for", 3) && !is_alnum(p[3])) {
-                cur = new_token(TK_RESERVED, cur, p, 3);
-                p += 3;
-            } else if(!strncmp(p, "if", 2) && !is_alnum(p[2])) {
-                cur = new_token(TK_RESERVED, cur, p, 2);
-                p += 2;
-            } else if(!strncmp(p, ">=", 2) || !strncmp(p, "<=", 2) ||
-                        !strncmp(p, "==", 2) || !strncmp(p, "!=", 2)) {
-                cur = new_token(TK_RESERVED, cur, p, 2);
-                p += 2;
-            } else if(*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
-                        *p == '(' || *p == ')' || *p == '>' || *p == '<' ||
-                        *p == '=' || *p == ',') {
-                cur = new_token(TK_RESERVED, cur, p++, 1);
-            } else if('a' <= *p && *p <= 'z') {
-                char *head = p;
-                while(('a' <= *p && *p <= 'z') || ('0' <= *p && *p <= '9')) {
-                    p++;
-                }
-                int len = p - head;
-                cur = new_token(TK_IDENT, cur, head, len);
-                p = head + len;
-            } else if(isdigit(*p)) {
-                cur = new_token(TK_NUM, cur, p, -1);
-                cur->val = strtol(p, &p, 10);
-            } else {
-                error_at(p, "Cant tokenize");
-            }
-        }
-        if(*p == ';') {
+        // skip space
+        if(isspace(*p)) {
+            p++;
+        } else if(!strncmp(p, "\n", 1)) {
+            p++;
+        } else if(!strncmp(p, "return", 6) && !is_alnum(p[6])) {
+            cur = new_token(TK_RESERVED, cur, p, 6);
+            p += 6;
+        } else if(!strncmp(p, "while", 5) && !is_alnum(p[5])) {
+            cur = new_token(TK_RESERVED, cur, p, 5);
+            p += 5;
+        } else if(!strncmp(p, "else", 4) && !is_alnum(p[4])) {
+            cur = new_token(TK_RESERVED, cur, p, 4);
+            p += 4;
+        } else if(!strncmp(p, "for", 3) && !is_alnum(p[3])) {
+            cur = new_token(TK_RESERVED, cur, p, 3);
+            p += 3;
+        } else if(!strncmp(p, "if", 2) && !is_alnum(p[2])) {
+            cur = new_token(TK_RESERVED, cur, p, 2);
+            p += 2;
+        } else if(!strncmp(p, ">=", 2) || !strncmp(p, "<=", 2) ||
+                    !strncmp(p, "==", 2) || !strncmp(p, "!=", 2)) {
+            cur = new_token(TK_RESERVED, cur, p, 2);
+            p += 2;
+        } else if(*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
+                    *p == '(' || *p == ')' || *p == '>' || *p == '<' ||
+                    *p == '=' || *p == ',' || *p == '{' || *p == '}' || *p == ';') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
+        } else if('a' <= *p && *p <= 'z') {
+            char *head = p;
+            while(('a' <= *p && *p <= 'z') || ('0' <= *p && *p <= '9')) {
+                p++;
+            }
+            int len = p - head;
+            cur = new_token(TK_IDENT, cur, head, len);
+            p = head + len;
+        } else if(isdigit(*p)) {
+            cur = new_token(TK_NUM, cur, p, -1);
+            cur->val = strtol(p, &p, 10);
         } else {
-            error_at(p, "End of sentence must be a semicolon");
+            error_at(p, "Cant tokenize");
         }
     }
 
@@ -221,12 +215,6 @@ char *enum2str(NodeKind kind) {
             return "=";
         case ND_RETURN:
             return "ret";
-        case ND_IF:
-            return "if";
-        case ND_WHILE:
-            return "while";
-        case ND_FOR:
-            return "for";
         default:
             return "";
     }
@@ -263,7 +251,7 @@ void print_nodes(Node *node, int depth) {
             pprint_node(ND_LVAR, node->offset, depth);
             break;
         case ND_IF:
-            pprint_node(ND_IF, -1, depth);
+            pprint("if", depth);
             print_nodes(node->children[0], depth + 1);
             pprint("then", depth);
             print_nodes(node->children[1], depth + 1);
@@ -272,14 +260,14 @@ void print_nodes(Node *node, int depth) {
             pprint("endif", depth);
             break;
         case ND_WHILE:
-            pprint_node(ND_WHILE, -1, depth);
+            pprint("while", depth);
             print_nodes(node->children[0], depth + 1);
             pprint("do", depth);
             print_nodes(node->children[1], depth + 1);
             pprint("endwhile", depth);
             break;
         case ND_FOR:
-            pprint_node(ND_FOR, -1, depth);
+            pprint("for", depth);
             print_nodes(node->children[0], depth + 1);
             print_nodes(node->children[1], depth + 1);
             print_nodes(node->children[2], depth + 1);
@@ -287,6 +275,15 @@ void print_nodes(Node *node, int depth) {
             print_nodes(node->children[3], depth + 1);
             pprint("endfor", depth);
             break;
+        case ND_RETURN:
+            pprint("return", depth);
+            print_nodes(node->lhs, depth + 1);
+        case ND_BLOCK:
+            pprint("{", depth);
+            for(int i=0;node->children[i];++i) {
+                print_nodes(node->children[i], depth + 1);
+            }
+            pprint("}", depth);
         default:
             print_nodes(node->lhs, depth + 1);
             pprint_node(node->kind, -1, depth);
@@ -345,6 +342,17 @@ Node *stmt() {
         node = new_node(ND_RETURN, expr(), NULL);
         expect(";");
         return node;
+    } else if(consume("{")) {
+        node = new_node(ND_BLOCK, NULL, NULL);
+        int i = 0;
+        while(!consume("}")) {
+            if(token == NULL) {
+                error("expected '}' at end of input");
+            }
+            // TODO "if(1 == 1) {;" とかで無限ループしそう　確認
+            node->children[i++] = stmt();
+        }
+        node->children[i] = NULL;
     } else {
         node = expr();
         expect(";");

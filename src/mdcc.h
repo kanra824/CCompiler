@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG
+// #define DEBUG
 
 // kind of token
 typedef enum {
@@ -50,6 +50,7 @@ typedef enum {
     ND_IF, // if
     ND_WHILE, // while
     ND_FOR, // for
+    ND_BLOCK, // block
     ND_NUM, // 整数
 } NodeKind;
 
@@ -59,15 +60,16 @@ struct Node {
     NodeKind kind; // type of node
     Node *lhs; // left child
     Node *rhs; // right child
-    Node *children[10]; // children
+    Node *children[100]; // children
     int val; // use if kind == ND_NUM
     int offset; // use if kind == ND_LVAR
 };
 
-Token *token; // token sequence
-char *user_input; // program input
-LVar *locals; // local_variables;
-Node *code[100]; // node sequence
+extern Token *token; // token sequence
+extern char *user_input; // program input
+extern LVar *locals; // local_variables;
+extern Node *code[100]; // node sequence
+extern int id;
 
 //---------------------------------------------------------------
 // Function prototype
@@ -75,6 +77,7 @@ Node *code[100]; // node sequence
 // Error function
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
+int fresh_id();
 
 // Lexer
 bool consume(char *op);

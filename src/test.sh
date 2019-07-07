@@ -83,4 +83,14 @@ try 5 "i = 1; while(i < 5) i = i + 1; return i;"
 
 try 10 "sum = 0; for(i = 0; i < 5; i = i + 1) sum = sum + i; return sum;"
 
+try 15 "if(1 == 0) {
+        i = 1;
+        return i + 2;
+    } else {
+        sum = 0;
+        for(i = 1; i <= 5; i = i + 1) {
+            sum = sum + i;
+        }
+        return sum;
+    }"
 echo OK

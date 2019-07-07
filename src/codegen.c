@@ -40,40 +40,55 @@ void gen(Node *node) {
             printf("    ret\n");
             return;
         case ND_IF:
-            gen(node->children[0]);
-            printf("    pop rax\n");
-            printf("    cmp rax, 0\n");
-            if(node->children[2]) printf("    je .LelseXXX\n");
-            else printf("   je .LendXXX\n");
-            gen(node->children[1]);
-            if(node->children[2]) {
-                printf("    jmp .LendXXX\n");
-                printf(".LelseXXX:\n");
-                gen(node->children[2]);
+            {
+                int Lelse = fresh_id(), Lend = fresh_id();
+                gen(node->children[0]);
+                printf("    pop rax\n");
+                printf("    cmp rax, 0\n");
+                if(node->children[2]) printf("    je .Lelse%d\n", Lelse);
+                else printf("   je .Lend%d\n", Lend);
+                gen(node->children[1]);
+                if(node->children[2]) {
+                    printf("    jmp .Lend%d\n", Lend);
+                    printf(".Lelse%d:\n", Lelse);
+                    gen(node->children[2]);
+                }
+                printf(".Lend%d:\n", Lend);
+                return;
             }
-            printf(".LendXXX:\n");
-            return;
         case ND_WHILE:
-            printf(".LbeginXXX:\n");
-            gen(node->children[0]);
-            printf("    pop rax\n");
-            printf("    cmp rax, 0\n");
-            printf("    je .LendXXX\n");
-            gen(node->children[1]);
-            printf("    jmp .LbeginXXX\n");
-            printf(".LendXXX:\n");
-            return;
+            {
+                int Lbegin = fresh_id(), Lend = fresh_id();
+                printf(".Lbegin%d:\n", Lbegin);
+                gen(node->children[0]);
+                printf("    pop rax\n");
+                printf("    cmp rax, 0\n");
+                printf("    je .Lend%d\n", Lend);
+                gen(node->children[1]);
+                printf("    jmp .Lbegin%d\n", Lbegin);
+                printf(".Lend%d:\n", Lend);
+                return;
+            }
         case ND_FOR:
-            gen(node->children[0]);
-            printf(".LbeginXXX:\n");
-            gen(node->children[1]);
-            printf("    pop rax\n");
-            printf("    cmp rax, 0\n");
-            printf("    je .LendXXX\n");
-            gen(node->children[3]);
-            gen(node->children[2]);
-            printf("    jmp .LbeginXXX\n");
-            printf(".LendXXX:\n");
+            {
+                int Lbegin = fresh_id(), Lend = fresh_id();
+                gen(node->children[0]);
+                printf(".Lbegin%d:\n", Lbegin);
+                gen(node->children[1]);
+                printf("    pop rax\n");
+                printf("    cmp rax, 0\n");
+                printf("    je .Lend%d\n", Lend);
+                gen(node->children[3]);
+                gen(node->children[2]);
+                printf("    jmp .Lbegin%d\n", Lbegin);
+                printf(".Lend%d:\n", Lend);
+                return;
+            }
+        case ND_BLOCK:
+            for(int i=0;node->children[i];++i) {
+                gen(node->children[i]);
+                printf("    pop rax\n");
+            }
             return;
         default:
             break;

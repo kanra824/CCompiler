@@ -14,6 +14,6 @@ debug: $(OBJS)
 	$(CC) -g -O0 -o mdcc $(OBJS) $(LDFLAGS)
 
 clean:
-	rm -f mdcc *.o *~ tmp tmp.s a.out output.txt
+	rm -f mdcc *.o *~ tmp tmp.s a.out
 
 .PHONY: test clean

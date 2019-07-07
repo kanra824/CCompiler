@@ -1,5 +1,11 @@
 #include "mdcc.h"
 
+Token *token; // token sequence
+char *user_input; // program input
+LVar *locals; // local_variables;
+Node *code[100]; // node sequence
+int id;
+
 int main(int argc, char **argv) {
     if(argc != 2) {
         error("The number of arguments are not valid.");
