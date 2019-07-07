@@ -145,7 +145,8 @@ Token *tokenize(char *p) {
             p += 2;
         } else if(*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
                     *p == '(' || *p == ')' || *p == '>' || *p == '<' ||
-                    *p == '=' || *p == ',' || *p == '{' || *p == '}' || *p == ';') {
+                    *p == '=' || *p == ',' || *p == '{' || *p == '}' ||
+                     *p == ';') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
         } else if('a' <= *p && *p <= 'z') {
             char *head = p;
@@ -215,22 +216,28 @@ char *enum2str(NodeKind kind) {
             return "=";
         case ND_RETURN:
             return "ret";
+        case ND_APP:
+            return "fun ";
+        case ND_NUM:
+            return "val ";
+        case ND_LVAR:
+            return "var ";
         default:
             return "";
     }
 }
 
-void pprint_node(NodeKind kind, int val, int depth) {
+void pprint_node(Node *node, int depth) {
     for(int i=0;i<depth;++i) {
         printf("  ");
     }
-    printf("%s", enum2str(kind));
-    if(val == -1) {
-        printf("\n");
-    } else if(kind == ND_LVAR) {
-        printf("%c\n", 'a' + (val / 8) - 1);
+    printf("%s", enum2str(node->kind));
+    if(node->kind == ND_LVAR || node->kind == ND_APP) {
+        printf("%c\n", 'a' + (node->offset / 8) - 1);
+    } else if(node->kind == ND_NUM) {
+        printf("%d\n", node->val);
     } else {
-        printf("%d\n", val);
+        printf("\n");
     }
 }
 
@@ -245,10 +252,10 @@ void print_nodes(Node *node, int depth) {
     if(node == NULL) return;
     switch(node->kind) {
         case ND_NUM:
-            pprint_node(ND_NUM, node->val, depth);
+            pprint_node(node, depth);
             break;
         case ND_LVAR:
-            pprint_node(ND_LVAR, node->offset, depth);
+            pprint_node(node, depth);
             break;
         case ND_IF:
             pprint("if", depth);
@@ -278,15 +285,25 @@ void print_nodes(Node *node, int depth) {
         case ND_RETURN:
             pprint("return", depth);
             print_nodes(node->lhs, depth + 1);
+            break;
         case ND_BLOCK:
             pprint("{", depth);
             for(int i=0;node->children[i];++i) {
                 print_nodes(node->children[i], depth + 1);
             }
             pprint("}", depth);
+            break;
+        case ND_APP:
+            pprint_node(node, depth);
+            for(int i=0;node->children[i];++i) {
+                pprint_node(node->children[i], depth + 1);
+            }
+            pprint("endfun", depth);
+            printf("\n");
+            break;
         default:
             print_nodes(node->lhs, depth + 1);
-            pprint_node(node->kind, -1, depth);
+            pprint_node(node, depth);
             print_nodes(node->rhs, depth + 1);
     }
 }
@@ -448,6 +465,8 @@ Node *term() {
     if(tok) {
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
+        node->str = tok->str;
+        node->len = tok->len;
         LVar *lvar = find_lvar(tok);
         if(lvar) {
             node->offset = lvar->offset;
@@ -459,6 +478,17 @@ Node *term() {
             lvar->offset = locals->offset + 8;
             node->offset = lvar->offset;
             locals = lvar;
+        }
+        if(consume("(")) {
+            node->kind = ND_APP;
+            int i = 0;
+            if(!consume(")")) {
+                node->children[i++] = term();
+                while(consume(",")) {
+                    node->children[i++] = term();
+                }
+                expect(")");
+            }
         }
         return node;
     } else if(consume("(")) {

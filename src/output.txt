@@ -1,0 +1,87 @@
+print tokens
+TK_RESERVED: if
+TK_RESERVED: (
+TK_NUM: 1
+TK_RESERVED: ==
+TK_NUM: 1
+TK_RESERVED: )
+TK_RESERVED: {
+TK_IDENT: i
+TK_RESERVED: =
+TK_NUM: 1
+TK_RESERVED: ;
+TK_IDENT: i
+TK_RESERVED: +
+TK_NUM: 2
+TK_RESERVED: ;
+TK_RESERVED: }
+TK_RESERVED: else
+TK_NUM: 0
+TK_RESERVED: ;
+TK_EOF
+print nodes
+if
+    1
+  ==
+    1
+then
+  {
+      a
+    =
+      1
+      a
+    +
+      2
+  }
+  
+else
+  0
+endif
+
+
+.intel_syntax noprefix
+.global main
+main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 208
+    push 1
+    push 1
+    pop rdi
+    pop rax
+    cmp rax, rdi
+    sete al
+    movzb rax, al
+    push rax
+    pop rax
+    cmp rax, 0
+    je .LelseXXX
+    mov rax, rbp
+    sub rax, 8
+    push rax
+    push 1
+    pop rdi
+    pop rax
+    mov [rax], rdi
+    push rdi
+    pop rax
+    mov rax, rbp
+    sub rax, 8
+    push rax
+    pop rax
+    mov rax, [rax]
+    push rax
+    push 2
+    pop rdi
+    pop rax
+    add rax, rdi
+    push rax
+    pop rax
+    jmp .LendXXX
+.LelseXXX:
+    push 0
+.LendXXX:
+    pop rax
+    mov rsp, rbp
+    pop rbp
+    ret

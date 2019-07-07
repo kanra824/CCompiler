@@ -28,7 +28,6 @@ int main(int argc, char **argv) {
         
         for(int i=0;code[i];++i) {
             print_nodes(code[i], 0);
-            printf("\n\n");
         }
     #endif
 
@@ -36,21 +35,10 @@ int main(int argc, char **argv) {
     printf(".global main\n");
     printf("main:\n");
 
-    // prologue
-    // Allocate space for variables
-    printf("    push rbp\n");
-    printf("    mov rbp, rsp\n");
-    printf("    sub rsp, 208\n");
-
     // generate code in order
     for(int i=0;code[i];++i) {
         gen(code[i]);
         printf("    pop rax\n");
     }
-
-    // epilogue
-    printf("    mov rsp, rbp\n");
-    printf("    pop rbp\n");
-    printf("    ret\n");
     return 0;
 }

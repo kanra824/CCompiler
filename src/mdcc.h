@@ -51,6 +51,8 @@ typedef enum {
     ND_WHILE, // while
     ND_FOR, // for
     ND_BLOCK, // block
+    ND_FUN, // function
+    ND_APP, // apply
     ND_NUM, // 整数
 } NodeKind;
 
@@ -63,6 +65,8 @@ struct Node {
     Node *children[100]; // children
     int val; // use if kind == ND_NUM
     int offset; // use if kind == ND_LVAR
+    char *str;
+    int len;
 };
 
 extern Token *token; // token sequence
@@ -95,7 +99,7 @@ Token *tokenize(char *p);
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 char *enum2str(NodeKind kind);
-void pprint_node(NodeKind kind, int val, int depth);
+void pprint_node(Node* node, int depth);
 void pprint(char *str, int depth);
 void print_nodes(Node *node, int depth);
 void program();

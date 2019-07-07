@@ -90,6 +90,31 @@ void gen(Node *node) {
                 printf("    pop rax\n");
             }
             return;
+        case ND_APP:
+            {
+                int cnt = 0;
+                char *reg[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
+                for(int i=0;node->children[i];++i) {
+                    if(i == 6) {
+                        error("funcion arguments must be less than 6");
+                    }
+                    gen(node->children[i]);
+                    printf("    mov %s, rax\n", reg[i]);
+                    ++cnt;
+                }
+                // prologue
+                printf("    push rbp\n");
+                printf("    mov rbp, rsp\n");
+                printf("    sub rsp, %d\n", (cnt + cnt % 2) * 8);
+                // call
+                printf("    call %.*s\n", node->len, node->str);
+                // epilogue
+                printf("    pop rax\n");
+                printf("    mov rsp, rbp\n");
+                printf("pop rbp\n");
+                printf("ret\n");
+                return;
+            }
         default:
             break;
     }
