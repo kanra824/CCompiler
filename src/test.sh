@@ -48,6 +48,13 @@ try 7 "a = 1; b = 2 * 3 + 1; a * b;"
 try 2 "foo = 1; foo + 1;"
 try 7 "foo = 1; bar = 2 * 3 + 1; foo * bar;"
 
+try 1 "if(1 == 1) 1; else 0;"
+try 0 "if(0 == 1) 1; else 0;"
+
+try 5 "i = 1; while(i < 5) i = i + 1; return i;"
+
+try 10 "sum = 0; for(i = 0; i < 5; i = i + 1) sum = sum + i; return sum;"
+
 
 
 echo OK

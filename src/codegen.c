@@ -39,6 +39,42 @@ void gen(Node *node) {
             printf("    pop rbp\n");
             printf("    ret\n");
             return;
+        case ND_IF:
+            gen(node->children[0]);
+            printf("    pop rax\n");
+            printf("    cmp rax, 0\n");
+            if(node->children[2]) printf("    je .LelseXXX\n");
+            else printf("   je .LendXXX\n");
+            gen(node->children[1]);
+            if(node->children[2]) {
+                printf("    jmp .LendXXX\n");
+                printf(".LelseXXX:\n");
+                gen(node->children[2]);
+            }
+            printf(".LendXXX:\n");
+            return;
+        case ND_WHILE:
+            printf(".LbeginXXX:\n");
+            gen(node->children[0]);
+            printf("    pop rax\n");
+            printf("    cmp rax, 0\n");
+            printf("    je .LendXXX\n");
+            gen(node->children[1]);
+            printf("    jmp .LbeginXXX\n");
+            printf(".LendXXX:\n");
+            return;
+        case ND_FOR:
+            gen(node->children[0]);
+            printf(".LbeginXXX:\n");
+            gen(node->children[1]);
+            printf("    pop rax\n");
+            printf("    cmp rax, 0\n");
+            printf("    je .LendXXX\n");
+            gen(node->children[3]);
+            gen(node->children[2]);
+            printf("    jmp .LbeginXXX\n");
+            printf(".LendXXX:\n");
+            return;
         default:
             break;
     }

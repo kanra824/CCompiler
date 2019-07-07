@@ -10,7 +10,7 @@ bool consume(char *op) {
     printf("op: %s\n", op);
     printf("token->len: %d\n", token->len);
     printf("strlen(op): %ld\n", strlen(op)); */
-    if((token->kind != TK_RESERVED && (token->kind != TK_RETURN)) ||
+    if((token->kind != TK_RESERVED) ||
         strlen(op) != token->len ||
         memcmp(token->str, op, token->len)) {
             return false;
@@ -37,12 +37,12 @@ Token *consume_ident() {
  * else report error
  */
 void expect(char *op) {
+    // TODO: error_atがおかしい！！！！！
     // printf("%s\n", op);
     if(token->kind != TK_RESERVED ||
         strlen(op) != token->len ||
         memcmp(token->str, op, token->len)) {
-            printf("debug");
-        error_at(token->str, "It's not '%s'", op);
+            error_at(token->str, "It's not %s\n", op);
     }
     token = token->next;
 }
@@ -106,9 +106,6 @@ void print_tokens(Token *token) {
             case TK_IDENT:
                 printf("TK_IDENT: %s\n", token->str);
                 break;
-            case TK_RETURN:
-                printf("TK_RETURN: %s\n", token->str);
-                break;
             case TK_RESERVED:
                 printf("TK_RESERVED: %s\n", token->str);
                 break;
@@ -126,7 +123,7 @@ Token *tokenize(char *p) {
     head.next = NULL;
     Token *cur = &head;
 
-    char * ph = p;
+    char *ph = p;
     while(*p) {
         // printf("%ld\n", ph - p);
         // printf("%ld\n", cur - &head);
@@ -135,8 +132,20 @@ Token *tokenize(char *p) {
             if(isspace(*p)) {
                 p++;
             } else if(!strncmp(p, "return", 6) && !is_alnum(p[6])) {
-                cur = new_token(TK_RETURN, cur, p, 6);
+                cur = new_token(TK_RESERVED, cur, p, 6);
                 p += 6;
+            } else if(!strncmp(p, "while", 5) && !is_alnum(p[5])) {
+                cur = new_token(TK_RESERVED, cur, p, 5);
+                p += 5;
+            } else if(!strncmp(p, "else", 4) && !is_alnum(p[4])) {
+                cur = new_token(TK_RESERVED, cur, p, 4);
+                p += 4;
+            } else if(!strncmp(p, "for", 3) && !is_alnum(p[3])) {
+                cur = new_token(TK_RESERVED, cur, p, 3);
+                p += 3;
+            } else if(!strncmp(p, "if", 2) && !is_alnum(p[2])) {
+                cur = new_token(TK_RESERVED, cur, p, 2);
+                p += 2;
             } else if(!strncmp(p, ">=", 2) || !strncmp(p, "<=", 2) ||
                         !strncmp(p, "==", 2) || !strncmp(p, "!=", 2)) {
                 cur = new_token(TK_RESERVED, cur, p, 2);
@@ -219,6 +228,12 @@ char *enum2str(NodeKind kind) {
             return "=";
         case ND_RETURN:
             return "ret";
+        case ND_IF:
+            return "if";
+        case ND_WHILE:
+            return "while";
+        case ND_FOR:
+            return "for";
         default:
             return "";
     }
@@ -238,6 +253,13 @@ void pprint_node(NodeKind kind, int val, int depth) {
     }
 }
 
+void pprint(char *str, int depth) {
+    for(int i=0;i<depth;++i) {
+        printf("  ");
+    }
+    printf("%s\n", str);
+}
+
 void print_nodes(Node *node, int depth) {
     if(node == NULL) return;
     switch(node->kind) {
@@ -246,6 +268,31 @@ void print_nodes(Node *node, int depth) {
             break;
         case ND_LVAR:
             pprint_node(ND_LVAR, node->offset, depth);
+            break;
+        case ND_IF:
+            pprint_node(ND_IF, -1, depth);
+            print_nodes(node->children[0], depth + 1);
+            pprint("then", depth);
+            print_nodes(node->children[1], depth + 1);
+            pprint("else", depth);
+            print_nodes(node->children[2], depth + 1);
+            pprint("endif", depth);
+            break;
+        case ND_WHILE:
+            pprint_node(ND_WHILE, -1, depth);
+            print_nodes(node->children[0], depth + 1);
+            pprint("do", depth);
+            print_nodes(node->children[1], depth + 1);
+            pprint("endwhile", depth);
+            break;
+        case ND_FOR:
+            pprint_node(ND_FOR, -1, depth);
+            print_nodes(node->children[0], depth + 1);
+            print_nodes(node->children[1], depth + 1);
+            print_nodes(node->children[2], depth + 1);
+            pprint("do", depth);
+            print_nodes(node->children[3], depth + 1);
+            pprint("endfor", depth);
             break;
         default:
             print_nodes(node->lhs, depth + 1);
@@ -265,14 +312,51 @@ void program() {
 
 Node *stmt() {
     Node *node;
-    if(consume("return")) {
+    if(consume("if")) {
+        node = new_node(ND_IF, NULL, NULL);        
+        expect("(");
+        node->children[0] = expr();
+        expect(")");
+        node->children[1] = stmt();
+        if(consume("else")) {
+            node->children[2] = stmt();
+        } else {
+            node->children[2] = NULL;
+        }
+        return node;
+    } else if(consume("while")) {
+        node = new_node(ND_WHILE, NULL, NULL);
+        expect("(");
+        node->children[0] = expr();
+        expect(")");
+        node->children[1] = stmt();
+        return node;
+    } else if(consume("for")) {
+        node = new_node(ND_FOR, NULL, NULL);
+        expect("(");
+        if(!consume(";")) {
+            node->children[0] = expr();
+            expect(";");
+        }
+        if(!consume(";")) {
+            node->children[1] = expr();
+            expect(";");
+        }
+        if(!consume(")")) {
+            node->children[2] = expr();
+            expect(")");
+        }
+        node->children[3] = stmt();
+        return node;
+    } else if(consume("return")) {
         node = new_node(ND_RETURN, expr(), NULL);
+        expect(";");
+        return node;
     } else {
         node = expr();
+        expect(";");
+        return node;
     }
-
-    expect(";");
-    return node;
 }
 
 Node *expr() {
