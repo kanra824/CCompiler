@@ -74,6 +74,7 @@ extern char *user_input; // program input
 extern LVar *locals; // local_variables;
 extern Node *code[100]; // node sequence
 extern int id;
+extern int toplevel;
 
 //---------------------------------------------------------------
 // Function prototype

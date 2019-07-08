@@ -87,7 +87,7 @@ void gen(Node *node) {
         case ND_BLOCK:
             for(int i=0;node->children[i];++i) {
                 gen(node->children[i]);
-                printf("    pop rax\n");
+                if(node->children[i+1]) printf("    pop rax\n");
             }
             return;
         case ND_APP:
@@ -95,24 +95,44 @@ void gen(Node *node) {
                 int cnt = 0;
                 char *reg[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
                 for(int i=0;node->children[i];++i) {
-                    if(i == 6) {
-                        error("funcion arguments must be less than 6");
-                    }
                     gen(node->children[i]);
+                    printf("    pop rax\n");
                     printf("    mov %s, rax\n", reg[i]);
                     ++cnt;
                 }
                 // prologue
+                // printf("    push rbp\n");
+                // printf("    mov rbp, rsp\n");
+                // printf("    sub rsp, %d\n", (cnt + cnt % 2) * 8);
+                // call
+                printf("    call %.*s\n", node->len, node->str);
+                printf("    push rax\n");
+                // epilogue
+                // printf("    pop rax\n");
+                // printf("    mov rsp, rbp\n");
+                // printf("    pop rbp\n");
+                // printf("    ret\n");
+                return;
+            }
+        case ND_FUN:
+            {
+                int cnt = 0;
+                char *reg[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
+                for(int i=0;node->children[i+1];++i){
+                    ++cnt;
+                }
+                // prologue
+                printf("%.*s:\n", node->len, node->str);
                 printf("    push rbp\n");
                 printf("    mov rbp, rsp\n");
                 printf("    sub rsp, %d\n", (cnt + cnt % 2) * 8);
-                // call
-                printf("    call %.*s\n", node->len, node->str);
-                // epilogue
-                printf("    pop rax\n");
-                printf("    mov rsp, rbp\n");
-                printf("pop rbp\n");
-                printf("ret\n");
+                for(int i=0;i<cnt;++i) {
+                    printf("    mov [rbp-%d], %s\n", (i+1) * 8, reg[i]);
+                }
+
+                // generate
+                gen(node->children[cnt]);
+
                 return;
             }
         default:
@@ -160,8 +180,7 @@ void gen(Node *node) {
             printf("    movzb rax, al\n");
             break;
         default:
-            printf("%s", enum2str(node->kind));
-            error("Can't generate code");
+            error("Can't generate code. node->kind is %s", enum2str(node->kind));
             break;
     }
 

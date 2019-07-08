@@ -217,6 +217,8 @@ char *enum2str(NodeKind kind) {
         case ND_RETURN:
             return "ret";
         case ND_APP:
+            return "app ";
+        case ND_FUN:
             return "fun ";
         case ND_NUM:
             return "val ";
@@ -232,7 +234,7 @@ void pprint_node(Node *node, int depth) {
         printf("  ");
     }
     printf("%s", enum2str(node->kind));
-    if(node->kind == ND_LVAR || node->kind == ND_APP) {
+    if(node->kind == ND_LVAR || node->kind == ND_APP || node->kind == ND_FUN) {
         printf("%c\n", 'a' + (node->offset / 8) - 1);
     } else if(node->kind == ND_NUM) {
         printf("%d\n", node->val);
@@ -298,8 +300,15 @@ void print_nodes(Node *node, int depth) {
             for(int i=0;node->children[i];++i) {
                 pprint_node(node->children[i], depth + 1);
             }
-            pprint("endfun", depth);
             printf("\n");
+            break;
+        case ND_FUN:
+            pprint_node(node, depth);
+            int i = 0;
+            for(i=0;node->children[i+1];++i) {
+                pprint_node(node->children[i], depth + 1);
+            }
+            print_nodes(node->children[i], depth);
             break;
         default:
             print_nodes(node->lhs, depth + 1);
@@ -311,7 +320,8 @@ void print_nodes(Node *node, int depth) {
 void program() {
     int i = 0;
     while(!at_eof()) {
-        code[i++] = stmt();
+        toplevel = 1;
+        code[i++] = term();
     }
     
     code[i] = NULL;
@@ -480,7 +490,7 @@ Node *term() {
             locals = lvar;
         }
         if(consume("(")) {
-            node->kind = ND_APP;
+            node->kind = toplevel ? ND_FUN : ND_APP;
             int i = 0;
             if(!consume(")")) {
                 node->children[i++] = term();
@@ -489,8 +499,15 @@ Node *term() {
                 }
                 expect(")");
             }
+            if(toplevel) {
+                toplevel = 0;
+                // TODO: ブロック以外をコンパイルエラーにしたい
+                node->children[i] = stmt();
+            }
         }
         return node;
+    } else if(toplevel) {
+        error("function expected");
     } else if(consume("(")) {
         Node *node = expr();
         expect(")");

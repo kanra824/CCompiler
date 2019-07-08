@@ -5,6 +5,7 @@ char *user_input; // program input
 LVar *locals; // local_variables;
 Node *code[100]; // node sequence
 int id;
+int toplevel = 1;
 
 int main(int argc, char **argv) {
     if(argc != 2) {
@@ -33,12 +34,10 @@ int main(int argc, char **argv) {
 
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");
-    printf("main:\n");
 
     // generate code in order
     for(int i=0;code[i];++i) {
         gen(code[i]);
-        printf("    pop rax\n");
     }
     return 0;
 }
