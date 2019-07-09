@@ -7,7 +7,7 @@ void gen_lval(Node *node) {
         error("lvalue of substitution is not a variable");
     }
     printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->offset);
+    printf("    sub rax, %d\n", node->offset - 8);
     printf("    push rax\n");
 }
 
