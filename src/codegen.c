@@ -125,7 +125,8 @@ void gen(Node *node) {
                 printf("%.*s:\n", node->len, node->str);
                 printf("    push rbp\n");
                 printf("    mov rbp, rsp\n");
-                printf("    sub rsp, %d\n", (cnt * 8 + node->offset) + (cnt * 8 + node->offset) % 16);
+                fprintf(stderr, "%d\n", locals->offset);
+                printf("    sub rsp, %d\n", (cnt * 8 + locals->offset) + (cnt * 8 + locals->offset) % 16);
                 for(int i=0;i<cnt;++i) {
                     printf("    mov [rbp-%d], %s\n", (i + 1) * 8, reg[i]);
                     //printf("    push %s\n", reg[i]);
@@ -136,6 +137,15 @@ void gen(Node *node) {
 
                 return;
             }
+        case ND_ADDR:
+            gen_lval(node->lhs);
+            return;
+        case ND_DEREF:
+            gen(node->lhs);
+            printf("    pop rax\n");
+            printf("    mov rax, [rax]\n");
+            printf("    push rax\n");
+            return;
         default:
             break;
     }

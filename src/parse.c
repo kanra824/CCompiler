@@ -146,7 +146,7 @@ Token *tokenize(char *p) {
         } else if(*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
                     *p == '(' || *p == ')' || *p == '>' || *p == '<' ||
                     *p == '=' || *p == ',' || *p == '{' || *p == '}' ||
-                     *p == ';') {
+                     *p == ';' || *p == '&') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
         } else if('a' <= *p && *p <= 'z') {
             char *head = p;
@@ -310,6 +310,14 @@ void print_nodes(Node *node, int depth) {
             }
             print_nodes(node->children[i], depth);
             break;
+        case ND_DEREF:
+            pprint("!", depth);
+            print_nodes(node->lhs, depth + 1);
+            break;
+        case ND_ADDR:
+            pprint("ref", depth);
+            print_nodes(node->lhs, depth + 1);
+            break;
         default:
             print_nodes(node->lhs, depth + 1);
             pprint_node(node, depth);
@@ -462,6 +470,10 @@ Node *unary() {
         return term();
     } else if(consume("-")) {
         return new_node(ND_SUB, new_node_num(0), term());
+    } else if(consume("*")) {
+        return new_node(ND_DEREF, unary(), NULL);
+    } else if(consume("&")) {
+        return new_node(ND_ADDR, unary(), NULL);
     } else {
         return term();
     }
