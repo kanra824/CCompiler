@@ -53,6 +53,8 @@ typedef enum {
     ND_BLOCK, // block
     ND_FUN, // function
     ND_APP, // apply
+    ND_ADDR, // &
+    ND_DEREF, // *
     ND_NUM, // 整数
 } NodeKind;
 

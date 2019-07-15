@@ -41,47 +41,47 @@ void gen(Node *node) {
             return;
         case ND_IF:
             {
-                int Lelse = fresh_id(), Lend = fresh_id();
+                int label = fresh_id();
                 gen(node->children[0]);
                 printf("    pop rax\n");
                 printf("    cmp rax, 0\n");
-                if(node->children[2]) printf("    je .Lelse%d\n", Lelse);
-                else printf("   je .Lend%d\n", Lend);
+                if(node->children[2]) printf("    je .Lelse%d\n", label);
+                else printf("   je .Lend%d\n", label);
                 gen(node->children[1]);
                 if(node->children[2]) {
-                    printf("    jmp .Lend%d\n", Lend);
-                    printf(".Lelse%d:\n", Lelse);
+                    printf("    jmp .Lend%d\n", label);
+                    printf(".Lelse%d:\n", label);
                     gen(node->children[2]);
                 }
-                printf(".Lend%d:\n", Lend);
+                printf(".Lend%d:\n", label);
                 return;
             }
         case ND_WHILE:
             {
-                int Lbegin = fresh_id(), Lend = fresh_id();
-                printf(".Lbegin%d:\n", Lbegin);
+                int label = fresh_id();
+                printf(".Lbegin%d:\n", label);
                 gen(node->children[0]);
                 printf("    pop rax\n");
                 printf("    cmp rax, 0\n");
-                printf("    je .Lend%d\n", Lend);
+                printf("    je .Lend%d\n", label);
                 gen(node->children[1]);
-                printf("    jmp .Lbegin%d\n", Lbegin);
-                printf(".Lend%d:\n", Lend);
+                printf("    jmp .Lbegin%d\n", label);
+                printf(".Lend%d:\n", label);
                 return;
             }
         case ND_FOR:
             {
-                int Lbegin = fresh_id(), Lend = fresh_id();
+                int label = fresh_id();
                 gen(node->children[0]);
-                printf(".Lbegin%d:\n", Lbegin);
+                printf(".Lbegin%d:\n", label);
                 gen(node->children[1]);
                 printf("    pop rax\n");
                 printf("    cmp rax, 0\n");
-                printf("    je .Lend%d\n", Lend);
+                printf("    je .Lend%d\n", label);
                 gen(node->children[3]);
                 gen(node->children[2]);
-                printf("    jmp .Lbegin%d\n", Lbegin);
-                printf(".Lend%d:\n", Lend);
+                printf("    jmp .Lbegin%d\n", label);
+                printf(".Lend%d:\n", label);
                 return;
             }
         case ND_BLOCK:
@@ -125,9 +125,10 @@ void gen(Node *node) {
                 printf("%.*s:\n", node->len, node->str);
                 printf("    push rbp\n");
                 printf("    mov rbp, rsp\n");
-                printf("    sub rsp, %d\n", (cnt + cnt % 2) * 8);
+                printf("    sub rsp, %d\n", (cnt * 8 + node->offset) + (cnt * 8 + node->offset) % 16);
                 for(int i=0;i<cnt;++i) {
-                    printf("    mov [rbp-%d], %s\n", (i+1) * 8, reg[i]);
+                    printf("    mov [rbp-%d], %s\n", (i + 1) * 8, reg[i]);
+                    //printf("    push %s\n", reg[i]);
                 }
 
                 // generate
