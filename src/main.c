@@ -6,6 +6,7 @@ LVar *locals; // local_variables;
 Node *code[100]; // node sequence
 int id;
 int toplevel = 1;
+Tyenv *tyenv;
 
 int main(int argc, char **argv) {
     if(argc != 2) {
@@ -31,6 +32,16 @@ int main(int argc, char **argv) {
             print_nodes(code[i], 0);
         }
     #endif
+
+    tyenv = calloc(1, sizeof(Tyenv));
+    int i = 0;
+    while(code[i]) {
+        tyenv->offset = -1;
+        Type ty;
+        tyenv->ty = ty;
+        tyenv->ptr_to = NULL;
+        tycheck(code[i++]);
+    }
 
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");

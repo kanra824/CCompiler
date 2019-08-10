@@ -25,6 +25,14 @@ struct Token {
     int len; // token length
 };
 
+// Node type
+typedef struct Type Type;
+struct Type {
+    enum { LVAL, RVAL } val;
+    enum { INT, PTR } ty;
+    Type *ptr_to;
+};
+
 typedef struct LVar LVar;
 // type of local variable
 struct LVar {
@@ -32,6 +40,13 @@ struct LVar {
     char *name; // name of variable
     int len; // length of name
     int offset; // offset from RBP
+};
+
+typedef struct Tyenv Tyenv;
+struct Tyenv {
+    int offset;
+    Type ty;
+    Tyenv *ptr_to;
 };
 
 // kind of AST node
@@ -58,18 +73,20 @@ typedef enum {
     ND_NUM, // 整数
 } NodeKind;
 
-// type of AST Node
+// AST Node
 typedef struct Node Node;
 struct Node {
     NodeKind kind; // type of node
     Node *lhs; // left child
     Node *rhs; // right child
     Node *children[100]; // children
+    Type ty; // type
     int val; // use if kind == ND_NUM
     int offset; // use if kind == ND_LVAR
     char *str;
     int len;
 };
+
 
 extern Token *token; // token sequence
 extern char *user_input; // program input
@@ -77,6 +94,7 @@ extern LVar *locals; // local_variables;
 extern Node *code[100]; // node sequence
 extern int id;
 extern int toplevel;
+extern Tyenv *tyenv;
 
 //---------------------------------------------------------------
 // Function prototype
@@ -119,3 +137,6 @@ Node *term();
 // Code generation
 void gen_lval(Node *node);
 void gen(Node *node);
+
+// Type Check
+Type tycheck(Node *node);

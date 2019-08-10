@@ -100,4 +100,5 @@ try 0 "main() {
 try 3 "add(x, y) {return x + y;} main() {return add(1, 2);}"
 try 3 "add(x, y) {return x + y;} main() {a = 1; b = 2; c = 3; return add(a, 2);}"
 
+try 1 "main() {x = 1; y = &x; return *y;}"
 echo OK
