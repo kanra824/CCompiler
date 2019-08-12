@@ -1,16 +1,14 @@
 #include "mdcc.h"
 
 int compare_ty(Type t1, Type t2) {
-    Type *ty1;
-    ty1->val = t1.val;
+    Type *ty1 = calloc(1, sizeof(Type));
     ty1->ty = t1.ty;
     ty1->ptr_to = t1.ptr_to;
-    Type *ty2;
-    ty2->val = t2.val;
+    Type *ty2 = calloc(1, sizeof(Type));
     ty2->ty = t2.ty;
     ty2->ptr_to = t2.ptr_to;
     while(ty1 && ty2) {
-        if(ty1->ty == ty2->ty && ty1->val && ty2->val) {
+        if(ty1->ty == ty2->ty) {
             ty1 = ty1->ptr_to;
             ty2 = ty2->ptr_to;
         } else {
@@ -41,34 +39,51 @@ Type tycheck(Node *node) {
             ty1 = tycheck(node->lhs);
             ty2 = tycheck(node->rhs);
             if(ty1.ty == INT && ty2.ty == INT) {
-                Type t = {RVAL, INT, NULL};
+                Type t;
+                t.val = RVAL;
+                t.ty = INT;
                 node->ty = t;
                 return t;
             } else {
                 error("type error at binop");
             }
         case ND_ASSIGN:
+            ty1 = tycheck(node->lhs);
             ty2 = tycheck(node->rhs);
-            if(ty2.val == RVAL && node->lhs->kind == ND_LVAR) {
-                Tyenv *head = calloc(1, sizeof(Tyenv));
-                head->str = node->lhs->str;
-                head->len = node->lhs->len;
-                head->ty = ty2;
-                head->ptr_to = tyenv;
-                tyenv = head;
-                node->ty = ty2;
-                return ty2;
-            } else if(ty2.val == LVAL && node->lhs->kind == ND_LVAR) {
-                Tyenv *head = calloc(1, sizeof(Tyenv));
-                head->str = node->lhs->str;
-                head->len = node->lhs->len;
-                head->ty = *(ty2.ptr_to);
-                head->ptr_to = tyenv;
-                tyenv = head;
-                node->ty = *(ty2.ptr_to);
-                return *(ty2.ptr_to);
+            if(ty2.val == LVAL) {
+                ty2 = *ty2.ptr_to;
+            }
+            if(ty1.val == LVAL) {
+                char *str = "";
+                int len = 0;
+                Type *now = &ty1;
+                Type *head = now;
+                while(now->ptr_to) {
+                    now = now->ptr_to;
+                }
+                str = now->str;
+                len = now->len;
+                now = head;
+                Tyenv *nowenv = tyenv;
+                while(nowenv) {
+                    if(nowenv->len == len && !strncmp(nowenv->str, str, len)) {
+                        while(cntptr) {
+                            now = now->ptr_to;
+                            cntptr--;
+                        }
+                        if(compare_ty(*now, ty2)) {
+                            node->ty = *now;
+                            return *now;
+                        } else {
+                            error("type error at assign:A");
+                        }
+                    } else {
+                        nowenv = nowenv->ptr_to;
+                    }
+                }
+                error("type error at assign:B");
             } else {
-                error("type error at assign");
+                error("type error at assign:C");
             }
         case ND_LVAR:
             now = tyenv;
@@ -80,7 +95,29 @@ Type tycheck(Node *node) {
                     now = now->ptr_to;
                 }
             }
-            error("type error at lvar");
+            {
+                Tyenv *head = calloc(1, sizeof(Tyenv));
+                head->str = node->str;
+                head->len = node->len;
+                Type *root = calloc(1, sizeof(Type));
+                root->ty = INT;
+                root->val = LVAL;
+                root->str = node->str;
+                root->len = node->len;
+                while(cntptr) {
+                    Type *now = calloc(1, sizeof(Type));
+                    now->ty = PTR;
+                    now->val = LVAL;
+                    now->ptr_to = root;
+                    root = now;
+                    cntptr--;
+                }
+                head->ty = *root;
+                head->ptr_to = tyenv;
+                tyenv = head;
+                node->ty = *root;
+                return *root;
+            }
         case ND_RETURN:
             ty1 = tycheck(node->lhs);
             node->ty = ty1;
@@ -174,11 +211,16 @@ Type tycheck(Node *node) {
             ty2.ptr_to = &ty1;
             node->ty = ty2;
             return ty2;
-            break;
         case ND_DEREF:
+            cntptr += 1;
             ty1 = tycheck(node->lhs);
-            node->ty = *ty1.ptr_to;
-            return *ty1.ptr_to;
+            if(ty1.val == LVAL) {
+                node->ty = ty1;
+                return ty1;
+            } else {
+                node->ty = *ty1.ptr_to;
+                return *ty1.ptr_to;
+            }
         case ND_NUM:
             ty1.val = RVAL;
             ty1.ty = INT;

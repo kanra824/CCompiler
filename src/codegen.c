@@ -3,6 +3,9 @@
 // Code generation
 void gen_lval(Node *node) {
     if(node == NULL) return;
+    while(node->kind == ND_DEREF) {
+        node = node->lhs;
+    }
     if(node->kind != ND_LVAR) {
         error("lvalue of substitution is not a variable");
     }

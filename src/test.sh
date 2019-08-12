@@ -34,61 +34,61 @@ err() {
 
 
 # try arith
-try 0 "main() {return 0;}"
-try 42 "main() {return 42;}"
-try 21 "main() {return 5+20-4;}"
-try 41 "main() {return 12 + 34 - 5;}"
-try 49 "main() {return 1 + 2 * 24;}"
-try 47 "main() {return 5+6*7;}"
-try 15 "main() {return 5*(9-6);}"
-try 4 "main() {return (3+5)/2;}"
-try 2 "main() {return 1 + -2 + 3;}"
-try 1 "main() {return 7 + 3 * -2;}"
+try 0 "int main() {return 0;}"
+try 42 "int main() {return 42;}"
+try 21 "int main() {return 5+20-4;}"
+try 41 "int main() {return 12 + 34 - 5;}"
+try 49 "int main() {return 1 + 2 * 24;}"
+try 47 "int main() {return 5+6*7;}"
+try 15 "int main() {return 5*(9-6);}"
+try 4 "int main() {return (3+5)/2;}"
+try 2 "int main() {return 1 + -2 + 3;}"
+try 1 "int main() {return 7 + 3 * -2;}"
 
 # err arith
 err "0"
-err "main() {return +;}";
-err "main() {return *+;}";
-err "main() {return 0+;}"
-err "main() {return 0++;}"
-err "main() {return 0 += 1;}"
-err "main() {return 0 -= 1;}"
-err "main() {return 0 *= 1;}"
-err "main() {return 0 /= 1;}"
-err "main() {return i = 5 % 2;}"
+err "int main() {return +;}";
+err "int main() {return *+;}";
+err "int main() {return 0+;}"
+err "int main() {return 0++;}"
+err "int main() {return 0 += 1;}"
+err "int main() {return 0 -= 1;}"
+err "int main() {return 0 *= 1;}"
+err "int main() {return 0 /= 1;}"
+err "int main() {return i = 5 % 2;}"
 # err "foo;"
 
 # try compare
-try 1 "main() {return 0 == 0;}"
-try 0 "main() {return 0 == 1;}"
-try 1 "main() {return 0 != 1;}"
-try 0 "main() {return 0 != 0;}"
-try 1 "main() {return 0 < 1;}"
-try 0 "main() {return 0 < 0;}"
-try 1 "main() {return 1 <= 1;}"
-try 0 "main() {return 1 <= 0;}"
-try 1 "main() {return 1 > 0;}"
-try 0 "main() {return 0 > 0;}"
-try 1 "main() {return 1 >= 1;}"
-try 0 "main() {return 0 >= 1;}"
+try 1 "int main() {return 0 == 0;}"
+try 0 "int main() {return 0 == 1;}"
+try 1 "int main() {return 0 != 1;}"
+try 0 "int main() {return 0 != 0;}"
+try 1 "int main() {return 0 < 1;}"
+try 0 "int main() {return 0 < 0;}"
+try 1 "int main() {return 1 <= 1;}"
+try 0 "int main() {return 1 <= 0;}"
+try 1 "int main() {return 1 > 0;}"
+try 0 "int main() {return 0 > 0;}"
+try 1 "int main() {return 1 >= 1;}"
+try 0 "int main() {return 0 >= 1;}"
 
 # try 
-try 2 "main() {a = 1; return a + 1;}"
-try 7 "main() {a = 1; b = 2 * 3 + 1; return a * b;}"
-try 2 "main() {foo = 1; return foo + 1;}"
-try 7 "main() {foo = 1; bar = 2 * 3 + 1; return foo * bar;}"
+try 2 "int main() {int a = 1; return a + 1;}"
+try 7 "int main() {int a = 1; int b = 2 * 3 + 1; return a * b;}"
+try 2 "int main() {int foo = 1; return foo + 1;}"
+try 7 "int main() {int foo = 1; int bar = 2 * 3 + 1; return foo * bar;}"
 
-try 1 "main() {if(1 == 1) return 1; else return 0;}"
-try 0 "main() {if(0 == 1) return 1; else return 0;}"
+try 1 "int main() {if(1 == 1) return 1; else return 0;}"
+try 0 "int main() {if(0 == 1) return 1; else return 0;}"
 
-try 5 "main() {i = 1; while(i < 5) i = i + 1; return i;}"
+try 5 "int main() {int i = 1; while(i < 5) i = i + 1; return i;}"
 
-try 10 "main() {sum = 0; for(i = 0; i < 5; i = i + 1) sum = sum + i; return sum;}"
+try 10 "int main() {int sum = 0; int i; for(i = 0; i < 5; i = i + 1) sum = sum + i; return sum;}"
 
-try 0 "main() {if(1 == 0) {i = 1;return i + 2;} else {sum = 0;for(i = 1; i <= 0; i = i + 1) {sum = sum + i;}return sum;}}"
+try 0 "int main() {if(1 == 0) {int i = 1;return i + 2;} else {int sum = 0;for(int i = 1; i <= 0; i = i + 1) {sum = sum + i;}return sum;}}"
 
-try 3 "add(x, y) {return x + y;} main() {return add(1, 2);}"
-try 3 "add(x, y) {return x + y;} main() {a = 1; b = 2; c = 3; return add(a, 2);}"
+try 3 "int add(int x, int y) {return x + y;} int main() {return add(1, 2);}"
+try 3 "int add(int x, int y) {return x + y;} int main() {int a = 1; int b = 2; int c = 3; return add(a, 2);}"
 
-try 1 "main() {x = 1; y = &x; return *y;}"
+try 1 "int main() {int x = 1; int y = &x; return *y;}"
 echo OK

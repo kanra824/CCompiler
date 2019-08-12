@@ -7,6 +7,7 @@ Node *code[100]; // node sequence
 int id;
 int toplevel = 1;
 Tyenv *tyenv, *tyenv_fun;
+int cntptr = 0;
 
 int main(int argc, char **argv) {
     if(argc != 2) {

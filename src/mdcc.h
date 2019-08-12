@@ -28,12 +28,13 @@ struct Token {
 // Node type
 typedef struct Type Type;
 struct Type {
+    char *str;
+    int len;
     enum { LVAL, RVAL } val;
     enum { INT, PTR, FUN } ty;
     Type *param[100];
     Type *ret;
     Type *ptr_to;
-
 };
 
 typedef struct LVar LVar;
@@ -51,6 +52,13 @@ struct Tyenv {
     int len;
     Type ty;
     Tyenv *ptr_to;
+};
+
+typedef struct Env Env;
+struct Env {
+    char *str;
+    int len;
+    Env *ptr_to;
 };
 
 // kind of AST node
@@ -92,6 +100,7 @@ struct Node {
 };
 
 
+
 extern Token *token; // token sequence
 extern char *user_input; // program input
 extern LVar *locals; // local_variables;
@@ -100,6 +109,7 @@ extern int id;
 extern int toplevel;
 extern Tyenv *tyenv;
 extern Tyenv *tyenv_fun;
+extern int cntptr;
 
 //---------------------------------------------------------------
 // Function prototype

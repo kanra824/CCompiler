@@ -136,6 +136,9 @@ Token *tokenize(char *p) {
         } else if(!strncmp(p, "for", 3) && !is_alnum(p[3])) {
             cur = new_token(TK_RESERVED, cur, p, 3);
             p += 3;
+        } else if(!strncmp(p, "int", 3) && !is_alnum(p[3])) {
+            cur = new_token(TK_RESERVED, cur, p, 3);
+            p += 3;
         } else if(!strncmp(p, "if", 2) && !is_alnum(p[2])) {
             cur = new_token(TK_RESERVED, cur, p, 2);
             p += 2;
@@ -380,6 +383,7 @@ Node *stmt() {
     } else if(consume("{")) {
         node = new_node(ND_BLOCK, NULL, NULL);
         int i = 0;
+        LVar *locals_tmp = locals;
         while(!consume("}")) {
             if(token == NULL) {
                 error("expected '}' at end of input");
@@ -387,6 +391,7 @@ Node *stmt() {
             // TODO "if(1 == 1) {;" とかで無限ループしそう　確認
             node->children[i++] = stmt();
         }
+        locals = locals_tmp;
         node->children[i] = NULL;
     } else {
         node = expr();
@@ -482,16 +487,33 @@ Node *unary() {
 Node *term() {
     // if next_token == '(' then term must be '(' expr ')'
     // printf("term: %s\n", token->str);
+    int subst = consume("int");
+    Node *node = calloc(1, sizeof(Node));
+    Node *head = node;
+    while(subst && consume("*")) {
+        if(node->kind == ND_DEREF) {
+            node->lhs = calloc(1, sizeof(Node));
+            node = node->lhs;
+        }
+        node->kind = ND_DEREF;
+    }
     Token *tok = consume_ident();
 
     if(tok) {
-        Node *node = calloc(1, sizeof(Node));
+        if(node->kind == ND_DEREF) {
+            node->lhs = calloc(1, sizeof(Node));
+            node = node->lhs;
+        }
         node->kind = ND_LVAR;
         node->str = tok->str;
         node->len = tok->len;
         LVar *lvar = find_lvar(tok);
-        if(lvar) {
+        if(lvar && !subst) {
             node->offset = lvar->offset;
+        } else if(lvar && subst) {
+            error("This variable is already decleared");
+        } else if(!lvar && !subst) {
+            error("This variable is not yet decleared");
         } else {
             lvar = calloc(1, sizeof(LVar));
             lvar->next = locals;
@@ -517,7 +539,7 @@ Node *term() {
                 node->children[i] = stmt();
             }
         }
-        return node;
+        return head;
     } else if(toplevel) {
         error("function expected");
     } else if(consume("(")) {
