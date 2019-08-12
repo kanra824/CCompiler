@@ -29,8 +29,11 @@ struct Token {
 typedef struct Type Type;
 struct Type {
     enum { LVAL, RVAL } val;
-    enum { INT, PTR } ty;
+    enum { INT, PTR, FUN } ty;
+    Type *param[100];
+    Type *ret;
     Type *ptr_to;
+
 };
 
 typedef struct LVar LVar;
@@ -44,7 +47,8 @@ struct LVar {
 
 typedef struct Tyenv Tyenv;
 struct Tyenv {
-    int offset;
+    char *str;
+    int len;
     Type ty;
     Tyenv *ptr_to;
 };
@@ -95,6 +99,7 @@ extern Node *code[100]; // node sequence
 extern int id;
 extern int toplevel;
 extern Tyenv *tyenv;
+extern Tyenv *tyenv_fun;
 
 //---------------------------------------------------------------
 // Function prototype

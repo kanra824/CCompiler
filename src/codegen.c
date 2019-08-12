@@ -125,7 +125,7 @@ void gen(Node *node) {
                 printf("%.*s:\n", node->len, node->str);
                 printf("    push rbp\n");
                 printf("    mov rbp, rsp\n");
-                fprintf(stderr, "%d\n", locals->offset);
+                //fprintf(stderr, "%d\n", locals->offset);
                 printf("    sub rsp, %d\n", (cnt * 8 + locals->offset) + (cnt * 8 + locals->offset) % 16);
                 for(int i=0;i<cnt;++i) {
                     printf("    mov [rbp-%d], %s\n", (i + 1) * 8, reg[i]);

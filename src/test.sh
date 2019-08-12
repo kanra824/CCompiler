@@ -85,17 +85,7 @@ try 5 "main() {i = 1; while(i < 5) i = i + 1; return i;}"
 
 try 10 "main() {sum = 0; for(i = 0; i < 5; i = i + 1) sum = sum + i; return sum;}"
 
-try 0 "main() {
-    if(1 == 0) {
-        i = 1;
-        return i + 2;
-    } else {
-        sum = 0;
-        for(i = 1; i <= 0; i = i + 1) {
-            sum = sum + i;
-        }
-        return sum;
-    }}"
+try 0 "main() {if(1 == 0) {i = 1;return i + 2;} else {sum = 0;for(i = 1; i <= 0; i = i + 1) {sum = sum + i;}return sum;}}"
 
 try 3 "add(x, y) {return x + y;} main() {return add(1, 2);}"
 try 3 "add(x, y) {return x + y;} main() {a = 1; b = 2; c = 3; return add(a, 2);}"

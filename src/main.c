@@ -6,7 +6,7 @@ LVar *locals; // local_variables;
 Node *code[100]; // node sequence
 int id;
 int toplevel = 1;
-Tyenv *tyenv;
+Tyenv *tyenv, *tyenv_fun;
 
 int main(int argc, char **argv) {
     if(argc != 2) {
@@ -34,12 +34,12 @@ int main(int argc, char **argv) {
     #endif
 
     tyenv = calloc(1, sizeof(Tyenv));
+    tyenv_fun = calloc(1, sizeof(Tyenv));
+    tyenv_fun->str = "";
     int i = 0;
     while(code[i]) {
-        tyenv->offset = -1;
-        Type ty;
-        tyenv->ty = ty;
-        tyenv->ptr_to = NULL;
+        Tyenv *newenv = calloc(1, sizeof(Tyenv));
+        tyenv = newenv;
         tycheck(code[i++]);
     }
 

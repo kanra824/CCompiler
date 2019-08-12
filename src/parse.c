@@ -122,7 +122,7 @@ Token *tokenize(char *p) {
         // skip space
         if(isspace(*p)) {
             p++;
-        } else if(!strncmp(p, "\n", 1)) {
+        } else if(!strncmp(p, "\n", 1) || !strncmp(p, "\t", 1)) {
             p++;
         } else if(!strncmp(p, "return", 6) && !is_alnum(p[6])) {
             cur = new_token(TK_RESERVED, cur, p, 6);
