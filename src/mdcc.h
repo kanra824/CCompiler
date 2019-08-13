@@ -31,7 +31,7 @@ struct Type {
     char *str;
     int len;
     enum { LVAL, RVAL } val;
-    enum { INT, PTR, FUN } ty;
+    enum { INT, PTR, FUN } kind;
     Type *param[100];
     Type *ret;
     Type *ptr_to;
@@ -92,7 +92,7 @@ struct Node {
     Node *lhs; // left child
     Node *rhs; // right child
     Node *children[100]; // children
-    Type ty; // type
+    Type *ty; // type
     int val; // use if kind == ND_NUM
     int offset; // use if kind == ND_LVAR
     char *str;
@@ -109,7 +109,7 @@ extern int id;
 extern int toplevel;
 extern Tyenv *tyenv;
 extern Tyenv *tyenv_fun;
-extern int cntptr;
+extern int cntptr_ty;
 
 //---------------------------------------------------------------
 // Function prototype
@@ -154,4 +154,5 @@ void gen_lval(Node *node);
 void gen(Node *node);
 
 // Type Check
-Type tycheck(Node *node);
+void tycheck(Node *node);
+void tycheck_fun(Node *node);

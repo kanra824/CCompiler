@@ -7,7 +7,7 @@ Node *code[100]; // node sequence
 int id;
 int toplevel = 1;
 Tyenv *tyenv, *tyenv_fun;
-int cntptr = 0;
+int cntptr_ty = 0;
 
 int main(int argc, char **argv) {
     if(argc != 2) {
@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     while(code[i]) {
         Tyenv *newenv = calloc(1, sizeof(Tyenv));
         tyenv = newenv;
-        tycheck(code[i++]);
+        tycheck_fun(code[i++]);
     }
 
     printf(".intel_syntax noprefix\n");
