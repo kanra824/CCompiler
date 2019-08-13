@@ -3,15 +3,18 @@
 // Code generation
 void gen_lval(Node *node) {
     if(node == NULL) return;
-    while(node->kind == ND_DEREF) {
-        node = node->lhs;
+    switch(node->kind) {
+        case ND_LVAR:
+            printf("    lea rax, [rbp-%d]\n", node->offset - 8);
+            printf("    push rax\n");
+            return;
+        case ND_DEREF:
+            gen(node->lhs);
+            return;
     }
-    if(node->kind != ND_LVAR) {
-        error("lvalue of substitution is not a variable");
-    }
-    printf("    mov rax, rbp\n");
+/*     printf("    mov rax, rbp\n");
     printf("    sub rax, %d\n", node->offset - 8);
-    printf("    push rax\n");
+    printf("    push rax\n"); */
 }
 
 void gen(Node *node) {
@@ -149,6 +152,7 @@ void gen(Node *node) {
             printf("    mov rax, [rax]\n");
             printf("    push rax\n");
             return;
+
         default:
             break;
     }
