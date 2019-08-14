@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #define DEBUG
+#define DEBUG
 
 // kind of token
 typedef enum {
@@ -83,6 +83,7 @@ typedef enum {
     ND_ADDR, // &
     ND_DEREF, // *
     ND_NUM, // 整数
+    ND_DEC
 } NodeKind;
 
 // AST Node

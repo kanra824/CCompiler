@@ -85,13 +85,14 @@ try 5 "int main() {int i = 1; while(i < 5) i = i + 1; return i;}"
 
 try 10 "int main() {int sum; sum = 0; int i; for(i = 0; i < 5; i = i + 1) sum = sum + i; return sum;}"
 
-try 0 "int main() {if(1 == 0) {int i = 1;return i + 2;} else {int sum = 0;for(int i = 1; i <= 0; i = i + 1) {sum = sum + i;}return sum;}}"
+try 0 "int main() {if(1 == 0) {int i; i = 1;return i + 2;} else {int sum; sum = 0; int i;for(i = 1; i <= 0; i = i + 1) {sum = sum + i;}return sum;}}"
 
 try 3 "int add(int x, int y) {return x + y;} int main() {return add(1, 2);}"
-try 3 "int add(int x, int y) {return x + y;} int main() {int a = 1; int b = 2; int c = 3; return add(a, 2);}"
+try 3 "int add(int x, int y) {return x + y;} int main() {int a; a = 1; int b; b = 2; int c; c = 3; return add(a, 2);}"
 
 try 1 "int main() {int x; x = 1; int y; y = &x; return *y;}"
 
 try 3 "int main() {int x; int *y; y = &x; x = 3; return *y;}"
 try 3 "int main() {int x; int *y; y = &x; *y = 3; return x;}"
+
 echo OK

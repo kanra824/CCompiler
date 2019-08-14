@@ -124,7 +124,8 @@ void gen(Node *node) {
             {
                 int cnt = 0;
                 char *reg[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
-                for(int i=0;node->children[i+1];++i){
+                int i = 0;
+                for(i = 0;node->children[i+1];++i){
                     ++cnt;
                 }
                 // prologue
@@ -132,7 +133,8 @@ void gen(Node *node) {
                 printf("    push rbp\n");
                 printf("    mov rbp, rsp\n");
                 //fprintf(stderr, "%d\n", locals->offset);
-                printf("    sub rsp, %d\n", (cnt * 8 + locals->offset) + (cnt * 8 + locals->offset) % 16);
+                
+                printf("    sub rsp, %d\n", (cnt * 8 + node->children[i]->offset) + (cnt * 8 + node->children[i]->offset) % 16);
                 for(int i=0;i<cnt;++i) {
                     printf("    mov [rbp-%d], %s\n", (i + 1) * 8, reg[i]);
                     //printf("    push %s\n", reg[i]);

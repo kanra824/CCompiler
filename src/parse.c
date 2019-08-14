@@ -391,6 +391,7 @@ Node *stmt() {
             // TODO "if(1 == 1) {;" とかで無限ループしそう　確認
             node->children[i++] = stmt();
         }
+        node->offset += locals->offset;
         locals = locals_tmp;
         node->children[i] = NULL;
     } else {
