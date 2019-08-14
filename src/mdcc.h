@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG
+// #define DEBUG
 
 // kind of token
 typedef enum {
@@ -30,20 +30,11 @@ typedef struct Type Type;
 struct Type {
     char *str;
     int len;
-    enum { LVAL, RVAL } val;
+    enum { LVAL, RVAL, DEC } val;
     enum { INT, PTR, FUN } kind;
     Type *param[100];
     Type *ret;
     Type *ptr_to;
-};
-
-typedef struct LVar LVar;
-// type of local variable
-struct LVar {
-    LVar *next; // next variable or NULL
-    char *name; // name of variable
-    int len; // length of name
-    int offset; // offset from RBP
 };
 
 typedef struct Tyenv Tyenv;
@@ -59,6 +50,16 @@ struct Env {
     char *str;
     int len;
     Env *ptr_to;
+};
+
+typedef struct LVar LVar;
+// type of local variable
+struct LVar {
+    LVar *next; // next variable or NULL
+    char *name; // name of variable
+    int len; // length of name
+    int offset; // offset from RBP
+    Type *ty;
 };
 
 // kind of AST node
@@ -78,12 +79,11 @@ typedef enum {
     ND_WHILE, // while
     ND_FOR, // for
     ND_BLOCK, // block
-    ND_FUN, // function
     ND_APP, // apply
     ND_ADDR, // &
     ND_DEREF, // *
     ND_NUM, // 整数
-    ND_DEC
+    ND_NULL
 } NodeKind;
 
 // AST Node
@@ -95,9 +95,29 @@ struct Node {
     Node *children[100]; // children
     Type *ty; // type
     int val; // use if kind == ND_NUM
-    int offset; // use if kind == ND_LVAR
     char *str;
     int len;
+    LVar *lvar;
+};
+
+typedef struct Arg Arg;
+struct Arg {
+    Arg *next;
+    char *name;
+    int len;
+    Type *ty;
+};
+
+typedef struct Func Func;
+struct Func {
+    Func *next;
+    Arg *arg;
+    LVar *lvar;
+    Node *children[100];
+    Type *ty;
+    char *name;
+    int len;
+    int depth;
 };
 
 
@@ -105,7 +125,7 @@ struct Node {
 extern Token *token; // token sequence
 extern char *user_input; // program input
 extern LVar *locals; // local_variables;
-extern Node *code[100]; // node sequence
+extern Func *code[100]; // node sequence
 extern int id;
 extern int toplevel;
 extern Tyenv *tyenv;
@@ -140,6 +160,7 @@ void pprint_node(Node* node, int depth);
 void pprint(char *str, int depth);
 void print_nodes(Node *node, int depth);
 void program();
+Func *func();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -152,8 +173,9 @@ Node *term();
 
 // Code generation
 void gen_lval(Node *node);
+void gen_fun(Func *func);
 void gen(Node *node);
 
 // Type Check
 void tycheck(Node *node);
-void tycheck_fun(Node *node);
+void tycheck_fun(Func *func);

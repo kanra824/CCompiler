@@ -221,8 +221,6 @@ char *enum2str(NodeKind kind) {
             return "ret";
         case ND_APP:
             return "app ";
-        case ND_FUN:
-            return "fun ";
         case ND_NUM:
             return "val ";
         case ND_LVAR:
@@ -237,8 +235,8 @@ void pprint_node(Node *node, int depth) {
         printf("  ");
     }
     printf("%s", enum2str(node->kind));
-    if(node->kind == ND_LVAR || node->kind == ND_APP || node->kind == ND_FUN) {
-        printf("%c\n", 'a' + (node->offset / 8) - 1);
+    if(node->kind == ND_LVAR || node->kind == ND_APP) {
+        printf("%c\n", 'a' + node->lvar->offset);
     } else if(node->kind == ND_NUM) {
         printf("%d\n", node->val);
     } else {
@@ -305,14 +303,6 @@ void print_nodes(Node *node, int depth) {
             }
             printf("\n");
             break;
-        case ND_FUN:
-            pprint_node(node, depth);
-            int i = 0;
-            for(i=0;node->children[i+1];++i) {
-                pprint_node(node->children[i], depth + 1);
-            }
-            print_nodes(node->children[i], depth);
-            break;
         case ND_DEREF:
             pprint("!", depth);
             print_nodes(node->lhs, depth + 1);
@@ -331,11 +321,73 @@ void print_nodes(Node *node, int depth) {
 void program() {
     int i = 0;
     while(!at_eof()) {
-        toplevel = 1;
-        code[i++] = term();
+        locals = NULL;
+        code[i] = func();
+        code[i]->lvar = locals;
+        i++;
     }
     
     code[i] = NULL;
+}
+
+void read_ident(Func *fun) {
+    expect("int");
+    Token *tok = consume_ident();
+    Arg *arg = calloc(1, sizeof(Arg));
+
+    arg->name = tok->str;
+    arg->len = tok->len;
+    Type *tyarg = calloc(1, sizeof(Type));
+    tyarg->kind = INT;
+    while(consume("*")) {
+        Type *head = calloc(1, sizeof(Type));
+        head->kind = PTR;
+        head->ptr_to = tyarg;
+        tyarg = head;
+    }
+    arg->ty = tyarg;
+    if(fun->arg) {
+        arg->next = fun->arg;
+        fun->arg->next = arg;
+    } else {
+        fun->arg = arg;
+    }
+    return;
+}
+
+Func *func() {
+    expect("int");
+    Type *tyfun = calloc(1, sizeof(Type));
+    tyfun->kind = INT;
+    while(consume("*")) {
+        Type *head = calloc(1, sizeof(Type));
+        head->kind = PTR;
+        head->ptr_to = tyfun;
+        tyfun = head;
+    }
+
+    Token *tok = consume_ident();
+    Func *fun = calloc(1, sizeof(Func));
+
+    expect("(");
+    if(!consume(")")) {
+        read_ident(fun);
+        while(consume(",")){
+            read_ident(fun);
+        }
+        expect(")");
+    }
+
+    int i = 0;
+    expect("{");
+    while(!consume("}")) {
+        fun->children[i] = stmt();
+        i++;
+    }
+    fun->name = tok->str;
+    fun->len = tok->len;
+    fun->ty = tyfun;
+    return fun;
 }
 
 Node *stmt() {
@@ -383,7 +435,6 @@ Node *stmt() {
     } else if(consume("{")) {
         node = new_node(ND_BLOCK, NULL, NULL);
         int i = 0;
-        LVar *locals_tmp = locals;
         while(!consume("}")) {
             if(token == NULL) {
                 error("expected '}' at end of input");
@@ -391,9 +442,29 @@ Node *stmt() {
             // TODO "if(1 == 1) {;" とかで無限ループしそう　確認
             node->children[i++] = stmt();
         }
-        node->offset += locals->offset;
-        locals = locals_tmp;
         node->children[i] = NULL;
+    } else if(consume("int")) {
+        node = new_node(ND_NULL, NULL, NULL);
+        Type *ty = calloc(1, sizeof(Type));
+        ty->kind = INT;
+        while(consume("*")) {
+            Type *head = calloc(1, sizeof(Type));
+            head->kind = PTR;
+            head->ptr_to = ty;
+            ty = head;
+        }
+        Token *tok = consume_ident();
+        if(tok == NULL) {
+            error("ident expected");
+        }
+        LVar *lvar = calloc(1, sizeof(LVar));
+        lvar->name = tok->str;
+        lvar->len = tok->len;
+        lvar->next = locals;
+        lvar->ty = ty;
+        locals = lvar;
+        expect(";");
+        return node;
     } else {
         node = expr();
         expect(";");
@@ -488,61 +559,28 @@ Node *unary() {
 Node *term() {
     // if next_token == '(' then term must be '(' expr ')'
     // printf("term: %s\n", token->str);
-    int subst = consume("int");
     Node *node = calloc(1, sizeof(Node));
     Node *head = node;
-    while(subst && consume("*")) {
-        if(node->kind == ND_DEREF) {
-            node->lhs = calloc(1, sizeof(Node));
-            node = node->lhs;
-        }
-        node->kind = ND_DEREF;
-    }
     Token *tok = consume_ident();
 
     if(tok) {
-        if(node->kind == ND_DEREF) {
-            node->lhs = calloc(1, sizeof(Node));
-            node = node->lhs;
-        }
-        node->kind = ND_LVAR;
-        node->str = tok->str;
-        node->len = tok->len;
-        LVar *lvar = find_lvar(tok);
-        if(lvar && !subst) {
-            node->offset = lvar->offset;
-        } else if(lvar && subst) {
-            error("This variable is already decleared");
-        } else if(!lvar && !subst) {
-            error("This variable is not yet decleared");
-        } else {
-            lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
-            lvar->name = tok->str;
-            lvar->len = tok->len;
-            lvar->offset = locals->offset + 8;
-            node->offset = lvar->offset;
-            locals = lvar;
-        }
         if(consume("(")) {
-            node->kind = toplevel ? ND_FUN : ND_APP;
+            node->kind = ND_APP;
             int i = 0;
             if(!consume(")")) {
-                node->children[i++] = term();
+                node->children[i++] = stmt();
                 while(consume(",")) {
-                    node->children[i++] = term();
+                    node->children[i++] = stmt();
                 }
                 expect(")");
             }
-            if(toplevel) {
-                toplevel = 0;
-                // TODO: ブロック以外をコンパイルエラーにしたい
-                node->children[i] = stmt();
-            }
+            return head;
+        } else {
+            node->kind = ND_LVAR;
+            node->lvar = find_lvar(tok);
+            return head;
         }
-        return head;
-    } else if(toplevel) {
-        error("function expected");
+        
     } else if(consume("(")) {
         Node *node = expr();
         expect(")");

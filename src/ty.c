@@ -66,6 +66,7 @@ void tycheck(Node *node) {
         node->ty = ptr_to(node->lhs->ty);
         return;
     case ND_DEREF:
+        if(node->ty->val == DEC) return;
         if(node->lhs->ty->kind == PTR) {
             node->ty = node->lhs->ty->ptr_to;
         } else {
@@ -77,13 +78,12 @@ void tycheck(Node *node) {
 
 }
 
-void tycheck_fun(Node *node) {
-    node->ty = tyfun();
+void tycheck_fun(Func *func) {
+    func->ty = tyfun();
     int i = 0;
-    while(node->children[i+1]) {
-        tycheck(node->children[i]);
+    while(func->children[i]) {
+        tycheck(func->children[i]);
         i++;
     }
-    tycheck(node->children[i]);
     return;
 }

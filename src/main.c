@@ -3,7 +3,7 @@
 Token *token; // token sequence
 char *user_input; // program input
 LVar *locals; // local_variables;
-Node *code[100]; // node sequence
+Func *code[100]; // node sequence
 int id;
 int toplevel = 1;
 Tyenv *tyenv, *tyenv_fun;
@@ -34,10 +34,24 @@ int main(int argc, char **argv) {
         }
     #endif
 
+    int i = 0;
+    while(code[i]) {
+        int cnt = 1;
+        LVar *now = code[i]->lvar;
+        while(now) {
+            now->offset = cnt * 8;
+            now = now->next;
+            cnt++;
+        }
+        code[i]->depth = cnt * 8;
+        i++;
+    }
+
+
     tyenv = calloc(1, sizeof(Tyenv));
     tyenv_fun = calloc(1, sizeof(Tyenv));
     tyenv_fun->str = "";
-    int i = 0;
+    i = 0;
     while(code[i]) {
         Tyenv *newenv = calloc(1, sizeof(Tyenv));
         tyenv = newenv;
@@ -46,10 +60,11 @@ int main(int argc, char **argv) {
 
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");
+    printf(".global alloc4\n");
 
     // generate code in order
     for(int i=0;code[i];++i) {
-        gen(code[i]);
+        gen_fun(code[i]);
     }
     return 0;
 }
