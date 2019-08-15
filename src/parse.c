@@ -333,10 +333,6 @@ void program() {
 void read_ident(Func *fun) {
     expect("int");
     Token *tok = consume_ident();
-    Arg *arg = calloc(1, sizeof(Arg));
-
-    arg->name = tok->str;
-    arg->len = tok->len;
     Type *tyarg = calloc(1, sizeof(Type));
     tyarg->kind = INT;
     while(consume("*")) {
@@ -345,13 +341,19 @@ void read_ident(Func *fun) {
         head->ptr_to = tyarg;
         tyarg = head;
     }
+    Arg *arg = calloc(1, sizeof(Arg));
+    arg->name = tok->str;
+    arg->len = tok->len;
     arg->ty = tyarg;
-    if(fun->arg) {
-        arg->next = fun->arg;
-        fun->arg->next = arg;
-    } else {
-        fun->arg = arg;
-    }
+    LVar *lvar = calloc(1, sizeof(LVar));
+    lvar->name = tok->str;
+    lvar->len = tok->len;
+    lvar->ty = tyarg;
+
+    arg->next = fun->arg;
+    fun->arg = arg;
+    lvar->next = locals;
+    locals = lvar;
     return;
 }
 
@@ -560,25 +562,33 @@ Node *term() {
     // if next_token == '(' then term must be '(' expr ')'
     // printf("term: %s\n", token->str);
     Node *node = calloc(1, sizeof(Node));
-    Node *head = node;
     Token *tok = consume_ident();
 
     if(tok) {
+        int func_number = 0;
+        while(code[func_number]) {
+            if(tok->str == code[func_number]->name) break;
+            func_number++;
+        }
         if(consume("(")) {
             node->kind = ND_APP;
             int i = 0;
             if(!consume(")")) {
-                node->children[i++] = stmt();
+                node->children[i++] = assign();
                 while(consume(",")) {
-                    node->children[i++] = stmt();
+                    node->children[i++] = assign();
                 }
                 expect(")");
             }
-            return head;
+            LVar *lvar = calloc(1, sizeof(LVar));
+            node->lvar = lvar;
+            node->lvar->name = tok->str;
+            node->lvar->len = tok->len;
+            return node;
         } else {
             node->kind = ND_LVAR;
             node->lvar = find_lvar(tok);
-            return head;
+            return node;
         }
         
     } else if(consume("(")) {

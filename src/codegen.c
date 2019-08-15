@@ -22,9 +22,10 @@ void gen_fun(Func *func) {
     {
         int cnt = 0;
         char *reg[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
-        int i = 0;
-        for(i = 0;func->arg;++i){
-            ++cnt;
+        Arg *now = func->arg;
+        while(now) {
+            cnt++;
+            now = now->next;
         }
         // prologue
         printf("%.*s:\n", func->len, func->name);
@@ -59,14 +60,12 @@ void gen(Node *node) {
             printf("    push %d\n", node->val);
             return;
         case ND_LVAR:
-            if(node->ty->val != DEC) {
-                printf("#LVAR\n");
-                gen_lval(node);
-                printf("    pop rax\n");
-                printf("    mov rax, [rax]\n");
-                printf("    push rax\n");
-                return;
-            }
+            printf("#LVAR\n");
+            gen_lval(node);
+            printf("    pop rax\n");
+            printf("    mov rax, [rax]\n");
+            printf("    push rax\n");
+            return;
         case ND_ASSIGN:
             printf("#ASSIGN\n");
             gen_lval(node->lhs);
@@ -141,18 +140,22 @@ void gen(Node *node) {
             {
                 int cnt = 0;
                 char *reg[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
+
                 for(int i=0;node->children[i];++i) {
                     gen(node->children[i]);
-                    printf("    pop rax\n");
-                    printf("    mov %s, rax\n", reg[i]);
-                    ++cnt;
+                    cnt++;
+                }
+
+                while(cnt) {
+                    cnt--;
+                    printf("    pop %s\n", reg[cnt]);
                 }
                 // prologue
                 // printf("    push rbp\n");
                 // printf("    mov rbp, rsp\n");
                 // printf("    sub rsp, %d\n", (cnt + cnt % 2) * 8);
                 // call
-                printf("    call %.*s\n", node->len, node->str);
+                printf("    call %.*s\n", node->lvar->len, node->lvar->name);
                 printf("    push rax\n");
                 // epilogue
                 // printf("    pop rax\n");
@@ -186,18 +189,19 @@ void gen(Node *node) {
 
     switch(node->kind) {
         case ND_ADD:
+            printf("#ADD\n");
             if(node->lhs->ty->kind == PTR) {
                 if(node->rhs->ty->kind == INT) {
-                    printf("    imul rdi, 4\n");
+                    printf("    imul rdi, 8\n");
                 } else if(node->rhs->ty->kind == PTR) {
                     printf("    imul rdi, 8\n");
                 }
-            } else {
-                printf("    add rax, rdi\n");
             }
+            printf("    add rax, rdi\n");
             break;
         case ND_SUB:
             printf("#SUB\n");
+
             printf("    sub rax, rdi\n");
             break;
         case ND_MUL:

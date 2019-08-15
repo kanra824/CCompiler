@@ -31,16 +31,20 @@ void tycheck(Node *node) {
     }
 
     switch(node->kind) {
+    case ND_NULL:
+        return;
     case ND_MUL:
     case ND_DIV:
     case ND_BEQ:
     case ND_NEQ:
     case ND_LT:
     case ND_LE:
-    case ND_LVAR:
     case ND_APP:
     case ND_NUM:
         node->ty = tyint();
+        return;
+    case ND_LVAR:
+        node->ty = node->lvar->ty;
         return;
     case ND_ADD:
         if(node->rhs->ty->kind == PTR) {
@@ -66,9 +70,8 @@ void tycheck(Node *node) {
         node->ty = ptr_to(node->lhs->ty);
         return;
     case ND_DEREF:
-        if(node->ty->val == DEC) return;
-        if(node->lhs->ty->kind == PTR) {
-            node->ty = node->lhs->ty->ptr_to;
+        if(node->lhs->lvar->ty->kind == PTR) {
+            node->ty = node->lhs->lvar->ty->ptr_to;
         } else {
             node->ty = tyint();
         }

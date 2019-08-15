@@ -95,8 +95,6 @@ struct Node {
     Node *children[100]; // children
     Type *ty; // type
     int val; // use if kind == ND_NUM
-    char *str;
-    int len;
     LVar *lvar;
 };
 
