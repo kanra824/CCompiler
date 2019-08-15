@@ -112,10 +112,10 @@ struct Func {
     Arg *arg;
     LVar *lvar;
     Node *children[100];
-    Type *ty;
     char *name;
     int len;
     int depth;
+    Type *ty;
 };
 
 

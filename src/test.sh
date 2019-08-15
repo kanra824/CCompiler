@@ -1,8 +1,24 @@
-echo "#include <stdint.h>\n int64_t data[4]; void alloc4(int64_t **p, int64_t a, int64_t b, int64_t c, int64_t d) {*p = &data[0]; **p = a; *(*p + 1) = b; *(*p + 2) = c; *(*p + 3) = d;}" | gcc -xc -c -o tmp2.o -
+echo "int data[4]; void alloc4(int **p, int a, int b, int c, int d) {*p = &data[0]; **p = a; *(*p + 1) = b; *(*p + 2) = c; *(*p + 3) = d;}" | gcc -xc -c -o tmp2.o -
 
 try() {
     expected="$1"
     input="$2"
+
+    echo "$input" > tmp.c
+
+    gcc -S -o tmp.s tmp.c
+    gcc -o tmp tmp.s tmp2.o
+    ./tmp
+    actual="$?"
+    rm tmp.c
+
+    if [ "$actual" = "$expected" ]; then
+        echo "gcc: $input => $actual"
+    else
+        echo "gcc: $input => $actual"
+        echo "gcc: $expected expected, but got $actual"
+        exit 1
+    fi
 
     ./mdcc "$input" > tmp.s
     gcc -o tmp tmp.s tmp2.o
@@ -10,10 +26,10 @@ try() {
     actual="$?"
 
     if [ "$actual" = "$expected" ]; then
-        echo "$input => $actual"
+        echo "mdcc: $input => $actual"
     else
-        echo "$input => $actual"
-        echo "$expected expected, but got $actual"
+        echo "mdcc: $input => $actual"
+        echo "mdcc: $expected expected, but got $actual"
         exit 1
     fi
 }
@@ -79,6 +95,7 @@ try 2 "int main() {int a; a = 1; return a + 1;}"
 try 7 "int main() {int a; a = 1; int b; b = 2 * 3 + 1; return a * b;}"
 try 2 "int main() {int foo; foo = 1; return foo + 1;}"
 try 7 "int main() {int foo; foo = 1; int bar; bar = 2 * 3 + 1; return foo * bar;}"
+try 10 "int main() {int a; int b; int c; int d; a = 1; b = 2; c = 3; d = 4; return a + b + c + d;}"
 
 try 1 "int main() {if(1 == 1) return 1; else return 0;}"
 try 0 "int main() {if(0 == 1) return 1; else return 0;}"
@@ -92,10 +109,11 @@ try 0 "int main() {if(1 == 0) {int i; i = 1;return i + 2;} else {int sum; sum = 
 try 3 "int add(int x, int y) {return x + y;} int main() {return add(1, 2);}"
 try 3 "int add(int x, int y) {return x + y;} int main() {int a; a = 1; int b; b = 2; int c; c = 3; return add(a, 2);}"
 
-try 1 "int main() {int x; x = 1; int y; y = &x; return *y;}"
+try 1 "int main() {int x; x = 1; int *y; y = &x; return *y;}"
 
 try 3 "int main() {int x; int *y; y = &x; x = 3; return *y;}"
 try 3 "int main() {int x; int *y; y = &x; *y = 3; return x;}"
+try 3 "int main() {int x; int *y; int **z; z = &y; y = &x; x = 3; return **z;}"
 
 try 8 "int main() {int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 3; return *q;}"
 

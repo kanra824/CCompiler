@@ -1,5 +1,14 @@
 #include "mdcc.h"
 
+int size_of(Type *ty) {
+    if(ty->kind == INT) {
+        return 4;
+    } else if(ty->kind == PTR) {
+        return 8;
+    }
+    return 0;
+}
+
 // Code generation
 void gen_lval(Node *node) {
     if(node == NULL) return;
@@ -16,6 +25,8 @@ void gen_lval(Node *node) {
     printf("    sub rax, %d\n", node->offset - 8);
     printf("    push rax\n"); */
 }
+
+
 
 void gen_fun(Func *func) {
     printf("#FUN\n");
@@ -63,7 +74,16 @@ void gen(Node *node) {
             printf("#LVAR\n");
             gen_lval(node);
             printf("    pop rax\n");
-            printf("    mov rax, [rax]\n");
+
+            if(node->ty->kind == INT) {
+                printf("    movsx rax, dword ptr [rax]\n");
+            } else if(node->ty->kind == PTR) {
+                printf("mov rax, [rax]\n");
+            } else {
+                error("node->ty must be INT or PTR\n");
+            } 
+
+
             printf("    push rax\n");
             return;
         case ND_ASSIGN:
@@ -73,7 +93,13 @@ void gen(Node *node) {
 
             printf("    pop rdi\n");
             printf("    pop rax\n");
-            printf("    mov [rax], rdi\n");
+            if(node->ty->kind == INT) {
+                printf("    mov [rax], edi\n");
+            } else if(node->ty->kind == PTR) {
+                printf("    mov [rax], rdi\n");
+            } else {
+                error("node->ty must be INT or PTR\n");
+            }
             printf("    push rdi\n");
             return;
         case ND_RETURN:
@@ -191,11 +217,7 @@ void gen(Node *node) {
         case ND_ADD:
             printf("#ADD\n");
             if(node->lhs->ty->kind == PTR) {
-                if(node->rhs->ty->kind == INT) {
-                    printf("    imul rdi, 8\n");
-                } else if(node->rhs->ty->kind == PTR) {
-                    printf("    imul rdi, 8\n");
-                }
+                printf("    imul rdi, %d\n", size_of(node->rhs->ty));
             }
             printf("    add rax, rdi\n");
             break;

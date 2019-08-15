@@ -70,12 +70,19 @@ void tycheck(Node *node) {
         node->ty = ptr_to(node->lhs->ty);
         return;
     case ND_DEREF:
-        if(node->lhs->lvar->ty->kind == PTR) {
-            node->ty = node->lhs->lvar->ty->ptr_to;
-        } else {
-            node->ty = tyint();
+        {
+            Node *now = node;
+            while(now->lhs) {
+                now = now->lhs;
+            }
+
+            if(now->lvar->ty->kind == PTR) {
+                node->ty = now->lvar->ty->ptr_to;
+            } else {
+                node->ty = tyint();
+            }
+            return;
         }
-        return;
     }
 
 
