@@ -202,6 +202,10 @@ void gen(Node *node) {
             printf("    push rax\n");
             return;
 
+        case ND_SIZEOF:
+            printf("#SIZEOF\n");
+            printf("    push %d\n", node->size);
+            return;
         default:
             break;
     }

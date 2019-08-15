@@ -83,6 +83,16 @@ void tycheck(Node *node) {
             }
             return;
         }
+    case ND_SIZEOF:
+        {
+            if(node->lhs->ty->kind == INT) {
+                node->size = 4;
+            } else if(node->lhs->ty->kind == PTR) {
+                node->size = 8;
+            } else {
+                error("node->lhs->ty must be INT or PTR in ND_SIZEOF\n");
+            }
+        }
     }
 
 

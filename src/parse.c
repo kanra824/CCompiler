@@ -124,6 +124,9 @@ Token *tokenize(char *p) {
             p++;
         } else if(!strncmp(p, "\n", 1) || !strncmp(p, "\t", 1)) {
             p++;
+        } else if(!strncmp(p, "sizeof", 6) && !is_alnum(p[6])) {
+            cur = new_token(TK_RESERVED, cur, p, 6);
+            p += 6;
         } else if(!strncmp(p, "return", 6) && !is_alnum(p[6])) {
             cur = new_token(TK_RESERVED, cur, p, 6);
             p += 6;
@@ -545,7 +548,9 @@ Node *mul() {
 
 Node *unary() {
     // printf("unary: %s\n", token->str);
-    if(consume("+")) {
+    if(consume("sizeof")) {
+        return new_node(ND_SIZEOF, unary(), NULL);
+    } else if(consume("+")) {
         return term();
     } else if(consume("-")) {
         return new_node(ND_SUB, new_node_num(0), term());

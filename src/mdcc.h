@@ -13,6 +13,7 @@ typedef enum {
     TK_IDENT, // identifier
     TK_NUM, // integer token
     TK_EOF, // end of file
+    TK_SIZEOF // sizeof
 } TokenKind;
 
 // token type
@@ -83,6 +84,7 @@ typedef enum {
     ND_ADDR, // &
     ND_DEREF, // *
     ND_NUM, // 整数
+    ND_SIZEOF, // sizeof (= 整数値)
     ND_NULL
 } NodeKind;
 
@@ -96,6 +98,7 @@ struct Node {
     Type *ty; // type
     int val; // use if kind == ND_NUM
     LVar *lvar;
+    int size;
 };
 
 typedef struct Arg Arg;

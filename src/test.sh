@@ -117,4 +117,8 @@ try 3 "int main() {int x; int *y; int **z; z = &y; y = &x; x = 3; return **z;}"
 
 try 8 "int main() {int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 3; return *q;}"
 
+try 4 "int main() {return sizeof (1);}"
+try 8 "int main() {int *x; return sizeof(x);}"
+try 4 "int main() {int *x; return sizeof(*x);}"
+
 echo OK
