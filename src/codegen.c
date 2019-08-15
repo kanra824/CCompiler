@@ -5,6 +5,8 @@ int size_of(Type *ty) {
         return 4;
     } else if(ty->kind == PTR) {
         return 8;
+    } else if(ty->kind == ARRAY) {
+        return ty->array_size * size_of(ty->ptr_to);
     }
     return 0;
 }
@@ -32,9 +34,12 @@ void gen_fun(Func *func) {
     printf("#FUN\n");
     {
         int cnt = 0;
-        char *reg[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
+        char *r[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
+        char *e[6] = {"EDI", "ESI", "EDX", "ECX", "E8", "E9"};
+        int ofs[6];
         Arg *now = func->arg;
         while(now) {
+            ofs[cnt] = size_of(now->ty);
             cnt++;
             now = now->next;
         }
@@ -46,7 +51,11 @@ void gen_fun(Func *func) {
         
         printf("    sub rsp, %d\n", func->depth);
         for(int i=0;i<cnt;++i) {
-            printf("    mov [rbp-%d], %s\n", (i + 1) * 8, reg[i]);
+            if(ofs[i] == 8) {
+                printf("    mov [rbp-%d], %s\n", (i + 1) * ofs[i], r[i]);
+            } else if(ofs[i] == 4) {
+                printf("    mov [rbp-%d], %s\n", (i + 1) * ofs[i], e[i]);
+            }
             //printf("    push %s\n", reg[i]);
         }
 

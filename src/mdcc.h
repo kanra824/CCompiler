@@ -31,11 +31,12 @@ typedef struct Type Type;
 struct Type {
     char *str;
     int len;
-    enum { LVAL, RVAL, DEC } val;
-    enum { INT, PTR, FUN } kind;
+    enum { LVAL, RVAL } val;
+    enum { INT, PTR, FUN, ARRAY } kind;
     Type *param[100];
     Type *ret;
     Type *ptr_to;
+    int array_size;
 };
 
 typedef struct Tyenv Tyenv;
@@ -173,6 +174,7 @@ Node *unary();
 Node *term();
 
 // Code generation
+int size_of(Type *ty);
 void gen_lval(Node *node);
 void gen_fun(Func *func);
 void gen(Node *node);

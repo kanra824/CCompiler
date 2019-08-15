@@ -152,7 +152,7 @@ Token *tokenize(char *p) {
         } else if(*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
                     *p == '(' || *p == ')' || *p == '>' || *p == '<' ||
                     *p == '=' || *p == ',' || *p == '{' || *p == '}' ||
-                     *p == ';' || *p == '&') {
+                     *p == ';' || *p == '&' || *p == '[' || *p == ']') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
         } else if('a' <= *p && *p <= 'z') {
             char *head = p;
@@ -462,12 +462,27 @@ Node *stmt() {
         if(tok == NULL) {
             error("ident expected");
         }
-        LVar *lvar = calloc(1, sizeof(LVar));
-        lvar->name = tok->str;
-        lvar->len = tok->len;
-        lvar->next = locals;
-        lvar->ty = ty;
-        locals = lvar;
+        if(consume("[")) {
+            LVar *lvar = calloc(1, sizeof(LVar));
+            Type *head = calloc(1, sizeof(Type));
+            head->kind = ARRAY;
+            head->array_size = expect_number();
+            head->ptr_to = ty;
+            ty = head;
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->next = locals;
+            lvar->ty = ty;
+            locals = lvar;
+            expect("]");
+        } else {
+            LVar *lvar = calloc(1, sizeof(LVar));
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->next = locals;
+            lvar->ty = ty;
+            locals = lvar;
+        }
         expect(";");
         return node;
     } else {

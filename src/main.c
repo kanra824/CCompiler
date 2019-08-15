@@ -36,14 +36,15 @@ int main(int argc, char **argv) {
 
     int i = 0;
     while(code[i]) {
-        int cnt = 1;
+        int offset = 0;
         LVar *now = code[i]->lvar;
         while(now) {
-            now->offset = cnt * 8;
+            offset += size_of(now->ty);
+            now->offset = offset;
             now = now->next;
-            cnt++;
         }
-        code[i]->depth = cnt * 8;
+        code[i]->depth = offset;
+
         i++;
     }
 
