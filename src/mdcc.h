@@ -171,6 +171,7 @@ Node *relational();
 Node *add();
 Node *mul();
 Node *unary();
+Node *postfix();
 Node *term();
 
 // Code generation

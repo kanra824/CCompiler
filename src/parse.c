@@ -574,8 +574,19 @@ Node *unary() {
     } else if(consume("&")) {
         return new_node(ND_ADDR, unary(), NULL);
     } else {
-        return term();
+        return postfix();
     }
+}
+
+Node *postfix() {
+    Node *node1 = term();
+
+    while(consume("[")) {
+        Node *node2 = new_node(ND_ADD, node1, expr());
+        expect("]");
+        node1 = new_node(ND_DEREF, node2, NULL);
+    }
+    return node1;
 }
 
 Node *term() {
