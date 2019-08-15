@@ -121,4 +121,8 @@ try 4 "int main() {return sizeof (1);}"
 try 8 "int main() {int *x; return sizeof(x);}"
 try 4 "int main() {int *x; return sizeof(*x);}"
 
+try 0 "int main() {int a[1]; return 0;}"
+try 1 "int main() {int a[1]; a[0] = 1; return a[0];}"
+try 4 "int main() {int a[5]; a[0] = 1; a[1] = 2; a[2] = 3; a[3] = 4; a[4] = 5; return a[3];}"
+
 echo OK

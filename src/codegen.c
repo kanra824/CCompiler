@@ -88,8 +88,9 @@ void gen(Node *node) {
                 printf("    movsx rax, dword ptr [rax]\n");
             } else if(node->ty->kind == PTR) {
                 printf("mov rax, [rax]\n");
+            } else if(node->ty->kind == ARRAY) {
             } else {
-                error("node->ty must be INT or PTR\n");
+                error("node->ty must be INT or PTR or ARRAY\n");
             } 
 
 
@@ -106,6 +107,7 @@ void gen(Node *node) {
                 printf("    mov [rax], edi\n");
             } else if(node->ty->kind == PTR) {
                 printf("    mov [rax], rdi\n");
+            } else if(node->ty->kind == ARRAY) {
             } else {
                 error("node->ty must be INT or PTR\n");
             }
