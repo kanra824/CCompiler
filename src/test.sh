@@ -21,7 +21,7 @@ try() {
     fi
 
     ./mdcc "$input" > tmp.s
-    gcc -o tmp tmp.s tmp2.o
+    gcc -static -o tmp tmp.s tmp2.o
     ./tmp
     actual="$?"
 
@@ -41,7 +41,7 @@ err() {
     if [ "$actual" = "1" ]; then
         echo "$input => <error>"
     else
-        gcc -o tmp tmp.s tmp2.o
+        gcc -static -o tmp tmp.s tmp2.o
         ./tmp
         actual = "$?"
         echo "$input => $actual"
@@ -125,4 +125,7 @@ try 0 "int main() {int a[1]; return 0;}"
 try 1 "int main() {int a[1]; a[0] = 1; return a[0];}"
 try 4 "int main() {int a[5]; a[0] = 1; a[1] = 2; a[2] = 3; a[3] = 4; a[4] = 5; return a[3];}"
 
+try 23 "int x; int main() {x = 23; return x;}"
+try 5 "int x; int y; int main() {x = 2; y = 3; return x + y;}"
+try 6 "int a[3]; int main() {a[0] = 1; a[1] = 2; a[2] = 3; return a[0] + a[1] + a[2];}"
 echo OK

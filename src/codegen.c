@@ -22,6 +22,9 @@ void gen_lval(Node *node) {
         case ND_DEREF:
             gen(node->lhs);
             return;
+        case ND_GVAR:
+            printf("    push offset %.*s\n", node->gvar->len, node->gvar->name);
+            return;
     }
 /*     printf("    mov rax, rbp\n");
     printf("    sub rax, %d\n", node->offset - 8);
@@ -30,26 +33,26 @@ void gen_lval(Node *node) {
 
 
 
-void gen_fun(Func *func) {
+void gen_top(Top *top) {
     printf("#FUN\n");
-    {
+    if (top->gvar == NULL) {
         int cnt = 0;
         char *r[6] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
         char *e[6] = {"EDI", "ESI", "EDX", "ECX", "E8", "E9"};
         int ofs[6];
-        Arg *now = func->arg;
+        Arg *now = top->arg;
         while(now) {
             ofs[cnt] = size_of(now->ty);
             cnt++;
             now = now->next;
         }
         // prologue
-        printf("%.*s:\n", func->len, func->name);
+        printf("%.*s:\n", top->len, top->name);
         printf("    push rbp\n");
         printf("    mov rbp, rsp\n");
         //fprintf(stderr, "%d\n", locals->offset);
         
-        printf("    sub rsp, %d\n", func->depth);
+        printf("    sub rsp, %d\n", top->depth);
         for(int i=0;i<cnt;++i) {
             if(ofs[i] == 8) {
                 printf("    mov [rbp-%d], %s\n", (i + 1) * ofs[i], r[i]);
@@ -62,8 +65,8 @@ void gen_fun(Func *func) {
         // generate
 
         cnt = 0;
-        while(func->children[cnt]) {
-            gen(func->children[cnt]);
+        while(top->children[cnt]) {
+            gen(top->children[cnt]);
             cnt++;
         }
         return;
@@ -80,7 +83,8 @@ void gen(Node *node) {
             printf("    push %d\n", node->val);
             return;
         case ND_LVAR:
-            printf("#LVAR\n");
+        case ND_GVAR:
+            printf("#VAR\n");
             gen_lval(node);
             printf("    pop rax\n");
 

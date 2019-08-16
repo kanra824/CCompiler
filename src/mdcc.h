@@ -64,6 +64,15 @@ struct LVar {
     Type *ty;
 };
 
+typedef struct GVar GVar;
+struct GVar {
+    GVar *next;
+    char *name;
+    int len;
+    int offset;
+    Type *ty;
+};
+
 // kind of AST node
 typedef enum {
     ND_ADD, // +
@@ -86,7 +95,8 @@ typedef enum {
     ND_DEREF, // *
     ND_NUM, // 整数
     ND_SIZEOF, // sizeof (= 整数値)
-    ND_NULL
+    ND_NULL,
+    ND_GVAR // global variable
 } NodeKind;
 
 // AST Node
@@ -99,6 +109,7 @@ struct Node {
     Type *ty; // type
     int val; // use if kind == ND_NUM
     LVar *lvar;
+    GVar *gvar;
     int size;
 };
 
@@ -110,11 +121,12 @@ struct Arg {
     Type *ty;
 };
 
-typedef struct Func Func;
-struct Func {
-    Func *next;
+typedef struct Top Top;
+struct Top {
+    Top *next;
     Arg *arg;
     LVar *lvar;
+    GVar *gvar;
     Node *children[100];
     char *name;
     int len;
@@ -127,12 +139,13 @@ struct Func {
 extern Token *token; // token sequence
 extern char *user_input; // program input
 extern LVar *locals; // local_variables;
-extern Func *code[100]; // node sequence
+extern Top *code[100]; // node sequence
 extern int id;
 extern int toplevel;
 extern Tyenv *tyenv;
 extern Tyenv *tyenv_fun;
 extern int cntptr_ty;
+extern GVar *globals;
 
 //---------------------------------------------------------------
 // Function prototype
@@ -148,6 +161,7 @@ Token *consume_ident();
 void expect(char *op);
 int expect_number();
 LVar *find_lvar(Token *tok);
+GVar *find_gvar(Token *tok);
 int is_alnum(char c);
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
@@ -162,7 +176,7 @@ void pprint_node(Node* node, int depth);
 void pprint(char *str, int depth);
 void print_nodes(Node *node, int depth);
 void program();
-Func *func();
+Top *top();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -177,9 +191,9 @@ Node *term();
 // Code generation
 int size_of(Type *ty);
 void gen_lval(Node *node);
-void gen_fun(Func *func);
+void gen_top(Top *func);
 void gen(Node *node);
 
 // Type Check
 void tycheck(Node *node);
-void tycheck_fun(Func *func);
+void tycheck_fun(Top *func);

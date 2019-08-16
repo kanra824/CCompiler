@@ -64,6 +64,15 @@ LVar *find_lvar(Token *tok) {
     return NULL;
 }
 
+GVar *find_gvar(Token *tok) {
+    for(GVar *var = globals; var; var = var->next) {
+        if(var->len == tok->len && !memcmp(tok->str, var->name, var->len)) {
+            return var;
+        }
+    }
+    return NULL;
+}
+
 int is_alnum(char c) {
     return ('a' <= c && c <= 'z') ||
             ('A' <= c && c <= 'Z') ||
@@ -325,7 +334,7 @@ void program() {
     int i = 0;
     while(!at_eof()) {
         locals = NULL;
-        code[i] = func();
+        code[i] = top();
         code[i]->lvar = locals;
         i++;
     }
@@ -333,7 +342,7 @@ void program() {
     code[i] = NULL;
 }
 
-void read_ident(Func *fun) {
+void read_ident(Top *fun) {
     expect("int");
     Token *tok = consume_ident();
     Type *tyarg = calloc(1, sizeof(Type));
@@ -360,39 +369,65 @@ void read_ident(Func *fun) {
     return;
 }
 
-Func *func() {
+Top *top() {
     expect("int");
-    Type *tyfun = calloc(1, sizeof(Type));
-    tyfun->kind = INT;
+    Type *ty = calloc(1, sizeof(Type));
+    ty->kind = INT;
     while(consume("*")) {
         Type *head = calloc(1, sizeof(Type));
         head->kind = PTR;
-        head->ptr_to = tyfun;
-        tyfun = head;
+        head->ptr_to = ty;
+        ty = head;
     }
 
     Token *tok = consume_ident();
-    Func *fun = calloc(1, sizeof(Func));
-
-    expect("(");
-    if(!consume(")")) {
-        read_ident(fun);
-        while(consume(",")){
-            read_ident(fun);
+    Top *top = calloc(1, sizeof(Top));
+    if(consume("(")) {
+        if(!consume(")")) {
+            read_ident(top);
+            while(consume(",")){
+                read_ident(top);
+            }
+            expect(")");
         }
-        expect(")");
-    }
 
-    int i = 0;
-    expect("{");
-    while(!consume("}")) {
-        fun->children[i] = stmt();
-        i++;
+        int i = 0;
+        expect("{");
+        while(!consume("}")) {
+            top->children[i] = stmt();
+            i++;
+        }
+        top->name = tok->str;
+        top->len = tok->len;
+        top->ty = ty;
+    } else if(consume("[")) {
+        GVar *gvar = calloc(1, sizeof(GVar));
+        Type *head = calloc(1, sizeof(Type));
+        head->kind = ARRAY;
+        head->array_size = expect_number();
+        head->ptr_to = ty;
+        ty = head;
+        gvar->name = tok->str;
+        gvar->len = tok->len;
+        gvar->next = globals;
+        gvar->ty = ty;
+        globals = gvar;
+        expect("]");
+        expect(";");
+        top->gvar = gvar;
+        top->ty = ty;
+    } else {
+        GVar *gvar = calloc(1, sizeof(GVar));
+        gvar->name = tok->str;
+        gvar->len = tok->len;
+        gvar->next = globals;
+        gvar->ty = ty;
+        globals = gvar;
+        expect(";");
+        top->gvar = gvar;
+        top->ty = ty;
     }
-    fun->name = tok->str;
-    fun->len = tok->len;
-    fun->ty = tyfun;
-    return fun;
+    return top;
 }
 
 Node *stmt() {
@@ -616,9 +651,11 @@ Node *term() {
             node->lvar->name = tok->str;
             node->lvar->len = tok->len;
             return node;
-        } else {
+        } else if(node->lvar = find_lvar(tok)) {
             node->kind = ND_LVAR;
-            node->lvar = find_lvar(tok);
+            return node;
+        } else if(node->gvar = find_gvar(tok)) {
+            node->kind = ND_GVAR;
             return node;
         }
         

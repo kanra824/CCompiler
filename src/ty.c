@@ -76,10 +76,18 @@ void tycheck(Node *node) {
                 now = now->lhs;
             }
 
-            if(now->lvar->ty->kind == PTR) {
-                node->ty = now->lvar->ty->ptr_to;
-            } else {
-                node->ty = tyint();
+            if(now->lvar) {
+                if(now->lvar->ty->kind == PTR) {
+                    node->ty = now->lvar->ty->ptr_to;
+                } else {
+                    node->ty = tyint();
+                }
+            } else if(now->gvar) {
+                if(now->gvar->ty->kind == PTR) {
+                    node->ty = now->gvar->ty->ptr_to;
+                } else {
+                    node->ty = tyint();
+                }
             }
             return;
         }
@@ -92,13 +100,19 @@ void tycheck(Node *node) {
             } else {
                 error("node->lhs->ty must be INT or PTR in ND_SIZEOF\n");
             }
+            return;
+        }
+    case ND_GVAR:
+        {
+            node->ty = node->gvar->ty;
+            return;
         }
     }
 
 
 }
 
-void tycheck_fun(Func *func) {
+void tycheck_fun(Top *func) {
     func->ty = tyfun();
     int i = 0;
     while(func->children[i]) {
