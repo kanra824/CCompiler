@@ -7,6 +7,8 @@ int size_of(Type *ty) {
         return 8;
     } else if(ty->kind == ARRAY) {
         return ty->array_size * size_of(ty->ptr_to);
+    } else if(ty->kind == CHAR) {
+        return 1;
     }
     return 0;
 }
@@ -90,8 +92,10 @@ void gen(Node *node) {
 
             if(node->ty->kind == INT) {
                 printf("    movsx rax, dword ptr [rax]\n");
+            } else if(node->ty->kind == CHAR) {
+                printf("    movsx rax, byte ptr [rax]\n");
             } else if(node->ty->kind == PTR) {
-                printf("mov rax, [rax]\n");
+                printf("    mov rax, [rax]\n");
             } else if(node->ty->kind == ARRAY) {
             } else {
                 error("node->ty must be INT or PTR or ARRAY\n");
@@ -109,6 +113,8 @@ void gen(Node *node) {
             printf("    pop rax\n");
             if(node->ty->kind == INT) {
                 printf("    mov [rax], edi\n");
+            } else if(node->ty->kind == CHAR) {
+                printf("    mov [rax], dl\n");
             } else if(node->ty->kind == PTR) {
                 printf("    mov [rax], rdi\n");
             } else if(node->ty->kind == ARRAY) {

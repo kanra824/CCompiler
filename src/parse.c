@@ -145,6 +145,9 @@ Token *tokenize(char *p) {
         } else if(!strncmp(p, "else", 4) && !is_alnum(p[4])) {
             cur = new_token(TK_RESERVED, cur, p, 4);
             p += 4;
+        } else if(!strncmp(p, "char", 4) && !is_alnum(p[4])) {
+            cur = new_token(TK_RESERVED, cur, p, 4);
+            p += 4;
         } else if(!strncmp(p, "for", 3) && !is_alnum(p[3])) {
             cur = new_token(TK_RESERVED, cur, p, 3);
             p += 3;
@@ -370,9 +373,13 @@ void read_ident(Top *fun) {
 }
 
 Top *top() {
-    expect("int");
+
     Type *ty = calloc(1, sizeof(Type));
-    ty->kind = INT;
+    if(consume("int")) {
+        ty->kind = INT;
+    } else if(consume("char")) {
+        ty->kind = CHAR;
+    }
     while(consume("*")) {
         Type *head = calloc(1, sizeof(Type));
         head->kind = PTR;
@@ -487,6 +494,43 @@ Node *stmt() {
         node = new_node(ND_NULL, NULL, NULL);
         Type *ty = calloc(1, sizeof(Type));
         ty->kind = INT;
+        while(consume("*")) {
+            Type *head = calloc(1, sizeof(Type));
+            head->kind = PTR;
+            head->ptr_to = ty;
+            ty = head;
+        }
+        Token *tok = consume_ident();
+        if(tok == NULL) {
+            error("ident expected");
+        }
+        if(consume("[")) {
+            LVar *lvar = calloc(1, sizeof(LVar));
+            Type *head = calloc(1, sizeof(Type));
+            head->kind = ARRAY;
+            head->array_size = expect_number();
+            head->ptr_to = ty;
+            ty = head;
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->next = locals;
+            lvar->ty = ty;
+            locals = lvar;
+            expect("]");
+        } else {
+            LVar *lvar = calloc(1, sizeof(LVar));
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->next = locals;
+            lvar->ty = ty;
+            locals = lvar;
+        }
+        expect(";");
+        return node;
+    } else if(consume("char")) {
+        node = new_node(ND_NULL, NULL, NULL);
+        Type *ty = calloc(1, sizeof(Type));
+        ty->kind = CHAR;
         while(consume("*")) {
             Type *head = calloc(1, sizeof(Type));
             head->kind = PTR;

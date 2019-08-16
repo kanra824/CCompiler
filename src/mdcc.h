@@ -32,7 +32,7 @@ struct Type {
     char *str;
     int len;
     enum { LVAL, RVAL } val;
-    enum { INT, PTR, FUN, ARRAY } kind;
+    enum { INT, PTR, FUN, ARRAY, CHAR } kind;
     Type *param[100];
     Type *ret;
     Type *ptr_to;
