@@ -163,7 +163,7 @@ extern Str *strings;
 
 // Error function
 void error(char *fmt, ...);
-void error_at(char *loc, char *fmt, ...);
+void error_at(char *loc, char *msg);
 int fresh_id();
 
 // Lexer

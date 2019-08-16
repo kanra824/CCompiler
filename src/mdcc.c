@@ -12,7 +12,7 @@ void error(char *fmt, ...) {
 }
 
 // report error and where it is occured
-void error_at(char *loc, char *fmt, ...) {
+/* void error_at(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
 
@@ -23,7 +23,7 @@ void error_at(char *loc, char *fmt, ...) {
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     exit(1);
-}
+} */
 
 int fresh_id() {
     return ++id;
