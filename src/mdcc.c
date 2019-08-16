@@ -29,3 +29,7 @@ void error_at(char *loc, char *fmt, ...) {
 int fresh_id() {
     return ++id;
 }
+
+int fresh_str_id() {
+    return ++str_id;
+}

@@ -13,7 +13,8 @@ typedef enum {
     TK_IDENT, // identifier
     TK_NUM, // integer token
     TK_EOF, // end of file
-    TK_SIZEOF // sizeof
+    TK_SIZEOF, // sizeof
+    TK_STR
 } TokenKind;
 
 // token type
@@ -70,7 +71,16 @@ struct GVar {
     char *name;
     int len;
     int offset;
+    int label;
     Type *ty;
+};
+
+typedef struct Str Str;
+struct Str {
+    Str *next;
+    char *body;
+    int label;
+    int len;
 };
 
 // kind of AST node
@@ -96,7 +106,8 @@ typedef enum {
     ND_NUM, // 整数
     ND_SIZEOF, // sizeof (= 整数値)
     ND_NULL,
-    ND_GVAR // global variable
+    ND_GVAR, // global variable
+    ND_STR // string literal
 } NodeKind;
 
 // AST Node
@@ -110,6 +121,7 @@ struct Node {
     int val; // use if kind == ND_NUM
     LVar *lvar;
     GVar *gvar;
+    Str *str;
     int size;
 };
 
@@ -134,18 +146,18 @@ struct Top {
     Type *ty;
 };
 
-
-
 extern Token *token; // token sequence
 extern char *user_input; // program input
 extern LVar *locals; // local_variables;
 extern Top *code[100]; // node sequence
 extern int id;
+extern int str_id;
 extern int toplevel;
 extern Tyenv *tyenv;
 extern Tyenv *tyenv_fun;
 extern int cntptr_ty;
 extern GVar *globals;
+extern Str *strings;
 
 //---------------------------------------------------------------
 // Function prototype
@@ -154,6 +166,7 @@ extern GVar *globals;
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 int fresh_id();
+int fresh_str_id();
 
 // Lexer
 bool consume(char *op);

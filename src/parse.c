@@ -1,4 +1,5 @@
 #include "mdcc.h"
+#include <string.h>
 
 // Lexer
 /* if next token is expected to be a symbol
@@ -166,6 +167,26 @@ Token *tokenize(char *p) {
                     *p == '=' || *p == ',' || *p == '{' || *p == '}' ||
                      *p == ';' || *p == '&' || *p == '[' || *p == ']') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
+        } else if(*p == '"') {
+            char *q = ++p;
+            while(*p && *p != '"') {
+                p++;
+            }
+            if(!*p) {
+                error_at(q, "string literal is not closed");
+            }
+            char s[p-q];
+            char *now = q;
+            int i = 0;
+            while(now != p) {
+                s[i] = *now;
+                i++;
+                now++;
+            }
+            cur = new_token(TK_STR, cur, q, p - q);
+
+            cur->str = s;
+            cur->len = p - q + 1;
         } else if('a' <= *p && *p <= 'z') {
             char *head = p;
             while(('a' <= *p && *p <= 'z') || ('0' <= *p && *p <= '9')) {
@@ -346,10 +367,16 @@ void program() {
 }
 
 void read_ident(Top *fun) {
-    expect("int");
-    Token *tok = consume_ident();
+    
     Type *tyarg = calloc(1, sizeof(Type));
-    tyarg->kind = INT;
+    if(consume("int")) {
+        tyarg->kind = INT;
+    } else {
+        tyarg->kind = CHAR;
+        expect("char");
+    }
+    
+    Token *tok = consume_ident();
     while(consume("*")) {
         Type *head = calloc(1, sizeof(Type));
         head->kind = PTR;
@@ -704,9 +731,32 @@ Node *term() {
         }
         
     } else if(consume("(")) {
-        Node *node = expr();
+        node = expr();
         expect(")");
         return node;
+    } else if(token->kind = TK_STR) {
+        Str *heads = calloc(1, sizeof(Str));
+        heads->body = token->str;
+        heads->len = token->len;
+        heads->next = strings;
+        heads->label = fresh_str_id();
+        strings = heads;
+
+        Type *ty = calloc(1, sizeof(Type));
+        ty->kind = CHAR;
+        Type *headt = calloc(1, sizeof(Type));
+        headt->kind = ARRAY;
+        headt->array_size = token->len;
+        headt->ptr_to = ty;
+        ty = headt;
+
+        node = new_node(ND_GVAR, NULL, NULL);
+        node->str = heads;
+        node->ty = ty;
+        node->gvar = calloc(1, sizeof(GVar));
+        node->gvar->ty = ty;
+        node->gvar->label = heads->label;
+        token = token->next;
     } else {
         // term muse be a number
         return new_node_num(expect_number());

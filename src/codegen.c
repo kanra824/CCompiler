@@ -25,7 +25,11 @@ void gen_lval(Node *node) {
             gen(node->lhs);
             return;
         case ND_GVAR:
-            printf("    push offset %.*s\n", node->gvar->len, node->gvar->name);
+            if(node->gvar->name) {
+                printf("    push offset %.*s\n", node->gvar->len, node->gvar->name);
+            } else {
+                printf("    push offset .L.%d\n", node->gvar->label);
+            }
             return;
     }
 /*     printf("    mov rax, rbp\n");

@@ -5,10 +5,12 @@ char *user_input; // program input
 LVar *locals; // local_variables;
 Top *code[100]; // node sequence
 int id;
+int str_id = 0;
 int toplevel = 1;
 Tyenv *tyenv, *tyenv_fun;
 int cntptr_ty = 0;
 GVar *globals;
+Str *strings;
 
 int main(int argc, char **argv) {
     if(argc != 2) {
@@ -58,7 +60,6 @@ int main(int argc, char **argv) {
         gvar = gvar->next;
     }
 
-
     tyenv = calloc(1, sizeof(Tyenv));
     tyenv_fun = calloc(1, sizeof(Tyenv));
     tyenv_fun->str = "";
@@ -73,12 +74,26 @@ int main(int argc, char **argv) {
     printf(".global main\n");
     printf(".global alloc4\n");
 
-    GVar *now = globals;
-    while(now) {
+    GVar *nowg = globals;
+    while(nowg) {
         printf("    .data\n");
-        printf("%.*s:\n", now->len, now->name);
-        printf("    .zero %d\n", now->offset);
-        now = now->next;
+        printf("%.*s:\n", nowg->len, nowg->name);
+        printf("    .zero %d\n", nowg->offset);
+        nowg = nowg->next;
+    }
+
+    Str *nows = strings;
+    while(nows) {
+        printf(".L.%d:\n", nows->label);
+        printf("    .string %.*s\n", nows->len, nows->body);
+
+        GVar *head = globals;
+        head->len = nows->len;
+        head->next = globals;
+        head->label = nows->label;
+        globals = head;
+
+        nows = nows->next;
     }
 
     printf("    .text\n");
