@@ -738,7 +738,6 @@ Node *term() {
         head->ptr_to = ty;
         ty = head;
         node->ty = ty;
-        node->gvar = calloc(1, sizeof(GVar));
         node->gvar->ty = ty;
         return node;
     } else if(consume("(")) {

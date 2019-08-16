@@ -3,7 +3,6 @@
 //---------------------------------------------------------------
 // Error function
 
-// report error
 void error(char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);

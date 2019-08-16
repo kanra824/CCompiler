@@ -208,3 +208,6 @@ void gen(Node *node);
 // Type Check
 void tycheck(Node *node);
 void tycheck_fun(Top *func);
+
+// helper.c
+char *read_file(char *path);

@@ -1,4 +1,5 @@
-echo "int data[4]; void alloc4(int **p, int a, int b, int c, int d) {*p = &data[0]; **p = a; *(*p + 1) = b; *(*p + 2) = c; *(*p + 3) = d;}" | gcc -xc -c -o tmp2.o -
+
+echo "int data[4]; void alloc4(int **p, int a, int b, int c, int d) { *p = &data[0]; **p = a; *(*p + 1) = b; *(*p + 2) = c; *(*p + 3) = d;}" | gcc -xc -c -o tmp2.o -
 
 try() {
     expected="$1"
@@ -7,7 +8,7 @@ try() {
     echo "$input" > tmp.c
 
     gcc -S -o tmp.s tmp.c
-    gcc -o tmp tmp.s tmp2.o
+    gcc -static -o tmp tmp.s tmp2.o
     ./tmp
     actual="$?"
     rm tmp.c
@@ -17,10 +18,12 @@ try() {
     else
         echo "gcc: $input => $actual"
         echo "gcc: $expected expected, but got $actual"
-        exit 1
+        read -p "gcc faild. using helper function? press return to enter." str
     fi
 
-    ./mdcc "$input" > tmp.s
+    echo "$input" > tmp.c
+    ./mdcc ./tmp.c > tmp.s
+    rm tmp.c
     gcc -static -o tmp tmp.s tmp2.o
     ./tmp
     actual="$?"
@@ -36,20 +39,23 @@ try() {
 
 err() {
     input="$1"
-    ./mdcc "$input" > tmp.s
+    echo "$input" > tmp.c
+    ./mdcc ./tmp.c > tmp.s
+    rm tmp.c
     actual="$?"
-    if [ "$actual" = "1" ]; then
-        echo "$input => <error>"
-    else
-        gcc -static -o tmp tmp.s tmp2.o
+    if [ "$actual" == "0"]; then
+        gcc -static -o tmp tmp.s
         ./tmp
-        actual = "$?"
+        actual="$?"
         echo "$input => $actual"
         echo "<error> expected, but got $actual"
         exit 1
+    else
+        echo "$input => <error>"
     fi
 }
 
+try 8 "int main() {int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 3; return *q;}"
 
 # try arith
 try 0 "int main() {return 0;}"
@@ -128,4 +134,6 @@ try 4 "int main() {int a[5]; a[0] = 1; a[1] = 2; a[2] = 3; a[3] = 4; a[4] = 5; r
 try 23 "int x; int main() {x = 23; return x;}"
 try 5 "int x; int y; int main() {x = 2; y = 3; return x + y;}"
 try 6 "int a[3]; int main() {a[0] = 1; a[1] = 2; a[2] = 3; return a[0] + a[1] + a[2];}"
+
+try 0 'int main() {printf("Hello, world!"); return 0;}'
 echo OK

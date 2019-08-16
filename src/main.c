@@ -17,7 +17,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    user_input = argv[1];
+
+    
+    user_input = read_file(argv[1]);
     locals = calloc(1, sizeof(LVar));
     locals->offset = 0;
     
@@ -72,7 +74,6 @@ int main(int argc, char **argv) {
 
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");
-    printf(".global alloc4\n");
 
     printf("    .data\n");
     GVar *nowg = globals;
@@ -84,7 +85,7 @@ int main(int argc, char **argv) {
 
     Str *nows = strings;
     while(nows) {
-        printf(".L.%d\n", nows->label);
+        printf(".L.%d:\n", nows->label);
         printf("    .string \"%.*s\"\n", nows->len, nows->name);
         nows = nows->next;
     }
