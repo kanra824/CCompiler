@@ -174,6 +174,20 @@ Token *tokenize(char *p) {
             int len = p - head;
             cur = new_token(TK_IDENT, cur, head, len);
             p = head + len;
+        } else if(*p == '"') {
+            char *q = ++p;
+            while(*p && *p != '"') {
+                p++;
+            }
+            if(!*p) {
+                error_at(q, "string, literal is not closed");
+            }
+            p++;
+
+            char *now = q;
+            cur = new_token(TK_STR, cur, q, p-q);
+            cur->str = q;
+            cur->len = p - q - 1;
         } else if(isdigit(*p)) {
             cur = new_token(TK_NUM, cur, p, -1);
             cur->val = strtol(p, &p, 10);
@@ -703,6 +717,30 @@ Node *term() {
             return node;
         }
         
+    } else if(token->kind == TK_STR) {
+        Str *heads = calloc(1, sizeof(Str));
+        heads->label = fresh_id();
+        heads->name = token->str;
+        heads->len = token->len;
+        heads->next = strings;
+        strings = heads;
+        token = token->next;
+
+        node = new_node(ND_GVAR, NULL, NULL);
+        node->gvar = calloc(1, sizeof(GVar));
+        node->gvar->label = heads->label;
+
+        Type *ty = calloc(1, sizeof(Type));
+        ty->kind = CHAR;
+        Type *head = calloc(1, sizeof(Type));
+        head->kind = ARRAY;
+        head->array_size = heads->len;
+        head->ptr_to = ty;
+        ty = head;
+        node->ty = ty;
+        node->gvar = calloc(1, sizeof(GVar));
+        node->gvar->ty = ty;
+        return node;
     } else if(consume("(")) {
         Node *node = expr();
         expect(")");

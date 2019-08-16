@@ -13,7 +13,8 @@ typedef enum {
     TK_IDENT, // identifier
     TK_NUM, // integer token
     TK_EOF, // end of file
-    TK_SIZEOF // sizeof
+    TK_SIZEOF, // sizeof
+    TK_STR
 } TokenKind;
 
 // token type
@@ -69,8 +70,17 @@ struct GVar {
     GVar *next;
     char *name;
     int len;
+    int label;
     int offset;
     Type *ty;
+};
+
+typedef struct Str Str;
+struct Str {
+    Str *next;
+    char *name;
+    int len;
+    int label;
 };
 
 // kind of AST node
@@ -146,6 +156,7 @@ extern Tyenv *tyenv;
 extern Tyenv *tyenv_fun;
 extern int cntptr_ty;
 extern GVar *globals;
+extern Str *strings;
 
 //---------------------------------------------------------------
 // Function prototype

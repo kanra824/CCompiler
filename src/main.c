@@ -9,6 +9,7 @@ int toplevel = 1;
 Tyenv *tyenv, *tyenv_fun;
 int cntptr_ty = 0;
 GVar *globals;
+Str *strings;
 
 int main(int argc, char **argv) {
     if(argc != 2) {
@@ -73,13 +74,22 @@ int main(int argc, char **argv) {
     printf(".global main\n");
     printf(".global alloc4\n");
 
-    GVar *now = globals;
-    while(now) {
-        printf("    .data\n");
-        printf("%.*s:\n", now->len, now->name);
-        printf("    .zero %d\n", now->offset);
-        now = now->next;
+    printf("    .data\n");
+    GVar *nowg = globals;
+    while(nowg) {
+        printf("%.*s:\n", nowg->len, nowg->name);
+        printf("    .zero %d\n", nowg->offset);
+        nowg = nowg->next;
     }
+
+    Str *nows = strings;
+    while(nows) {
+        printf(".L.%d\n", nows->label);
+        printf("    .string \"%.*s\"\n", nows->len, nows->name);
+        nows = nows->next;
+    }
+
+
 
     printf("    .text\n");
     // generate code in order
