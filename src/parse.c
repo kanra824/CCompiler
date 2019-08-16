@@ -124,6 +124,8 @@ Token *tokenize(char *p) {
     Token head;
     head.next = NULL;
     Token *cur = &head;
+    int comment_line = 0;
+    int comment = 0;
 
     while(*p) {
         // printf("%ld\n", ph - p);
@@ -131,7 +133,24 @@ Token *tokenize(char *p) {
         // skip space
         if(isspace(*p)) {
             p++;
-        } else if(!strncmp(p, "\n", 1) || !strncmp(p, "\t", 1)) {
+        } else if(!strncmp(p, "\n", 1)) {
+            comment_line = 0;
+            p++;
+        } else if(!strncmp(p, "\t", 1)) {
+            p++;
+        } else if(!strncmp(p, "//", 2)) {
+            comment_line = 1;
+            p += 2;
+        } else if(!strncmp(p, "/*", 2)) {               
+            comment = 1;
+            p += 2;
+        } else if(!strncmp(p, "*/", 2)) {
+            if(!comment) {
+                error_at(p, "/* is not appeard");
+            }
+            comment = 0;
+            p += 2;
+        } else if(comment || comment_line) {
             p++;
         } else if(!strncmp(p, "sizeof", 6) && !is_alnum(p[6])) {
             cur = new_token(TK_RESERVED, cur, p, 6);
